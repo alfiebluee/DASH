@@ -178,6 +178,7 @@ export type StaffRow = {
   email: string
   full_name: string
   job_title: string
+  access: "owner" | "viewer"
 }
 
 export function asNumber(value: unknown): number {

@@ -22,7 +22,7 @@ export async function getSession(): Promise<Session | null> {
     .eq("id", data.user.id)
     .maybeSingle()
 
-  if (!profile || (profile.role !== "owner" && profile.role !== "client")) return null
+  if (!profile || (profile.role !== "owner" && profile.role !== "viewer" && profile.role !== "client")) return null
   if (profile.role === "client" && !profile.client_id) return null
 
   const email = (profile.email || data.user.email || "").toLowerCase()

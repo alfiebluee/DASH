@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { saveClient, setClientArchived } from "@/app/(studio)/studio/clients/actions"
+import { useCanEdit } from "@/components/studio-access"
 import { useToast } from "@/components/toast-provider"
 import { Button } from "@/components/ui/button"
 import type { ClientRecord } from "@/lib/records"
@@ -11,8 +12,18 @@ import type { ClientRecord } from "@/lib/records"
 export function ClientEditor({ client }: { client: ClientRecord }) {
   const toast = useToast()
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [pending, setPending] = useState(false)
   const archived = Boolean(client.archived_at)
+
+  if (!canEdit) {
+    return (
+      <dl className="grid gap-3 text-[15px]">
+        <div><dt className="text-[13px] text-ink-3">Email</dt><dd>{client.email || "Not set"}</dd></div>
+        <div><dt className="text-[13px] text-ink-3">Phone</dt><dd>{client.phone || "Not set"}</dd></div>
+      </dl>
+    )
+  }
 
   return (
     <div className="grid gap-6">

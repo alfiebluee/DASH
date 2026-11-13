@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { saveOrder } from "@/app/(studio)/studio/projects/[id]/orders-actions"
+import { useCanEdit } from "@/components/studio-access"
 import { useToast } from "@/components/toast-provider"
 import { Button } from "@/components/ui/button"
 import { materialStatusLabel } from "@/lib/labels"
@@ -50,6 +51,7 @@ function OrderCard({
 }) {
   const toast = useToast()
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [pending, setPending] = useState(false)
   const [vat, setVat] = useState(String(order.vat))
   const [vatIncluded, setVatIncluded] = useState(order.vat_included)
@@ -61,6 +63,26 @@ function OrderCard({
     vatIncluded,
     delivery: Number(delivery) || 0,
   })
+
+  if (!canEdit) {
+    return (
+      <section className="grid gap-2 rounded-[28px] bg-surface p-5 shadow-[var(--shadow)]">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-[18px] font-medium">{order.reference || order.supplier_name || "Order"}</h2>
+          <span className="rounded-full bg-column px-3 py-1 text-[12px]">{materialStatusLabel(order.status)}</span>
+        </div>
+        <p className="text-[14px] text-ink-2">{order.supplier_name || "No supplier"}{order.paid_with ? ` · ${order.paid_with}` : ""}</p>
+        <p className="text-[16px]">Total {formatMoney(order.total)}</p>
+        {materials.length > 0 ? (
+          <ul className="grid gap-1 text-[14px] text-ink-2">
+            {materials.map((item) => (
+              <li key={item.id}>{item.item} · {formatMoney(item.line_total)} · {materialStatusLabel(item.status)}</li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+    )
+  }
 
   async function save(status: OrderRecord["status"], form: FormData) {
     setPending(true)

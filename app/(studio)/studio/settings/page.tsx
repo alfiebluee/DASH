@@ -14,7 +14,7 @@ export default async function SettingsPage() {
       <section className="mt-8 max-w-lg rounded-[28px] bg-surface p-8 shadow-[var(--shadow)]">
         <h2 className="text-[22px] font-normal">Access</h2>
         <p className="mt-2 text-[14px] leading-6 text-ink-2">
-          These people can sign in with a magic link. They have the same access to the studio.
+          Full access can change the studio. Look only can see the projects, documents, materials, orders and budgets, and cannot change them.
         </p>
         <ul className="mt-4 grid gap-3">
           {people.map((person) => (
@@ -22,6 +22,7 @@ export default async function SettingsPage() {
               <p className="text-[15px]">{person.full_name}</p>
               {person.job_title ? <p className="text-[13px] text-ink-2">{person.job_title}</p> : null}
               <p className="text-[13px] text-ink-3">{person.email}</p>
+              <p className="text-[13px] text-ink-2">{person.access === "owner" ? "Full access" : "Look only"}</p>
             </li>
           ))}
         </ul>

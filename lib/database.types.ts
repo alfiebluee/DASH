@@ -423,8 +423,11 @@ isOneToOne: false
                            },
 "list_staff":
 { Args: Record<PropertyKey, never>; Returns: {
-              "email": string,"full_name": string,"job_title": string
+              "access": string,"email": string,"full_name": string,"job_title": string
             }[]
+                           },
+"is_staff":
+{ Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "mark_late_deliveries":
 { Args: Record<PropertyKey, never>; Returns: undefined
@@ -437,7 +440,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "approval_decision": "approved"|"changes_requested","budget_kind": "design_delivery"|"handyman"|"materials"|"contingency"|"other","document_kind": "proposal"|"scope_of_work"|"set_design"|"budget"|"sign_off"|"other","document_status": "draft"|"sent"|"approved"|"changes_requested","invoice_status": "draft"|"sent"|"paid"|"void","invoice_type": "deposit"|"final","material_priority": "normal"|"high","material_status": "to_order"|"ordered"|"delivered"|"late"|"cancelled","order_status": "draft"|"ordered"|"delivered"|"late"|"cancelled","project_status": "active"|"ongoing"|"on_hold"|"archived","user_role": "owner"|"client"
+            "approval_decision": "approved"|"changes_requested","budget_kind": "design_delivery"|"handyman"|"materials"|"contingency"|"other","document_kind": "proposal"|"scope_of_work"|"set_design"|"budget"|"sign_off"|"other","document_status": "draft"|"sent"|"approved"|"changes_requested","invoice_status": "draft"|"sent"|"paid"|"void","invoice_type": "deposit"|"final","material_priority": "normal"|"high","material_status": "to_order"|"ordered"|"delivered"|"late"|"cancelled","order_status": "draft"|"ordered"|"delivered"|"late"|"cancelled","project_status": "active"|"ongoing"|"on_hold"|"archived","user_role": "owner"|"viewer"|"client"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -553,7 +556,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "approval_decision": ["approved", "changes_requested"],"budget_kind": ["design_delivery", "handyman", "materials", "contingency", "other"],"document_kind": ["proposal", "scope_of_work", "set_design", "budget", "sign_off", "other"],"document_status": ["draft", "sent", "approved", "changes_requested"],"invoice_status": ["draft", "sent", "paid", "void"],"invoice_type": ["deposit", "final"],"material_priority": ["normal", "high"],"material_status": ["to_order", "ordered", "delivered", "late", "cancelled"],"order_status": ["draft", "ordered", "delivered", "late", "cancelled"],"project_status": ["active", "ongoing", "on_hold", "archived"],"user_role": ["owner", "client"]
+            "approval_decision": ["approved", "changes_requested"],"budget_kind": ["design_delivery", "handyman", "materials", "contingency", "other"],"document_kind": ["proposal", "scope_of_work", "set_design", "budget", "sign_off", "other"],"document_status": ["draft", "sent", "approved", "changes_requested"],"invoice_status": ["draft", "sent", "paid", "void"],"invoice_type": ["deposit", "final"],"material_priority": ["normal", "high"],"material_status": ["to_order", "ordered", "delivered", "late", "cancelled"],"order_status": ["draft", "ordered", "delivered", "late", "cancelled"],"project_status": ["active", "ongoing", "on_hold", "archived"],"user_role": ["owner", "viewer", "client"]
           }
         }
 } as const

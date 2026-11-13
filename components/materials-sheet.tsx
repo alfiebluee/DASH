@@ -20,6 +20,7 @@ import {
 } from "@/app/(studio)/studio/projects/[id]/materials-actions"
 import { createOrder } from "@/app/(studio)/studio/projects/[id]/orders-actions"
 import { MaterialsImport } from "@/components/materials-import"
+import { useCanEdit } from "@/components/studio-access"
 import { useToast } from "@/components/toast-provider"
 import { Button } from "@/components/ui/button"
 import { Modal } from "@/components/ui/dialog"
@@ -92,6 +93,7 @@ export function MaterialsSheet({
 }) {
   const toast = useToast()
   const router = useRouter()
+  const canEdit = useCanEdit()
   const incoming = JSON.stringify(materials)
   const [items, setItems] = useState(materials)
   const [seen, setSeen] = useState(incoming)
@@ -187,6 +189,30 @@ export function MaterialsSheet({
   }
 
   const laidOut = layoutRows(groups(), collapsed)
+
+  if (!canEdit) {
+    const blocks = groups().filter((group) => group.items.length > 0)
+    return (
+      <div className="grid min-w-0 gap-4" data-testid="materials-sheet">
+        {blocks.length === 0 ? <p className="text-[15px] text-ink-2">No materials yet.</p> : null}
+        {blocks.map((group) => (
+          <section key={group.id || "none"} className="rounded-[28px] bg-surface p-5 shadow-[var(--shadow)]">
+            <h2 className="text-[16px] font-medium">{group.name}</h2>
+            <ul className="mt-3 grid gap-2">
+              {group.items.map((item) => (
+                <li key={item.id} className="text-[14px]">
+                  {item.item}
+                  {item.spec ? <span className="text-ink-3"> · {item.spec}</span> : null}
+                  <span className="text-ink-2"> · {item.quantity} · {formatMoney(item.line_total)} · {materialStatusLabel(item.status)}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+        <p className="text-[16px]">Grand total {formatMoney(grand)}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="grid min-w-0 gap-4" data-testid="materials-sheet">

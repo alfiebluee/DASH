@@ -2,12 +2,12 @@
 -- A magic-link sign-in creates the profile. Staff become owners. They are not clients.
 -- Client emails, phone numbers, budgets, and materials were not provided.
 
-insert into private.staff (email, full_name, job_title, sort_order) values
-  ('alfiebluee@gmail.com', 'Test user', '', 0),
-  ('alfie@asiya.space', 'Alfie', '', 4),
-  ('teddy@go-places.io', 'Teddy', 'Director of Ops', 1),
-  ('alexbutler@go-places.io', 'Alex', 'Head of Live Ops', 2),
-  ('riley@go-places.io', 'Riley', 'Live Ops Team', 3)
+insert into private.staff (email, full_name, job_title, sort_order, access) values
+  ('alfiebluee@gmail.com', 'Alfie', '', 0, 'owner'),
+  ('alfie@asiya.space', 'Alfie', '', 4, 'owner'),
+  ('teddy@go-places.io', 'Teddy', 'Director of Ops', 1, 'viewer'),
+  ('alexbutler@go-places.io', 'Alex', 'Head of Live Ops', 2, 'viewer'),
+  ('riley@go-places.io', 'Riley', 'Live Ops Team', 3, 'viewer')
 on conflict (email) do nothing;
 
 insert into public.settings (deposit_percent, business_name, business_email)

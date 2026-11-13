@@ -8,11 +8,13 @@ export function StudioShell({
   name,
   projects,
   clients,
+  canEdit = true,
   children,
 }: {
   name: string
   projects: ProjectCard[]
   clients: ClientRecord[]
+  canEdit?: boolean
   children: React.ReactNode
 }) {
   return (
@@ -20,6 +22,7 @@ export function StudioShell({
       <header className="md:sticky md:top-6 md:self-start">
         <p className="text-[11px] uppercase tracking-[0.18em] text-ink-3">Studio</p>
         <p className="mt-3 text-[15px] text-ink">{name}</p>
+        {canEdit ? null : <p className="mt-1 text-[13px] text-ink-3">You can look, not change.</p>}
         <StudioNav />
         <div className="mt-6">
           <SignOut />

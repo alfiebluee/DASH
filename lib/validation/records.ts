@@ -40,6 +40,8 @@ export const documentFormSchema = z.object({
   title: z.string().trim().min(1, "Give the document a title").max(160),
 })
 
+export const documentIdSchema = z.uuid("That document is not valid.")
+
 export const approvalSchema = z.object({
   document_id: z.uuid(),
   comment: z.string().trim().max(2000),

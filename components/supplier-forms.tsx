@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { addSupplier, saveSupplier } from "@/app/(studio)/studio/suppliers/actions"
+import { useCanEdit } from "@/components/studio-access"
 import { useToast } from "@/components/toast-provider"
 import { Button } from "@/components/ui/button"
 import type { SupplierRecord } from "@/lib/records"
@@ -11,7 +12,9 @@ import type { SupplierRecord } from "@/lib/records"
 export function CreateSupplierForm() {
   const toast = useToast()
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [pending, setPending] = useState(false)
+  if (!canEdit) return null
 
   return (
     <form
@@ -50,7 +53,17 @@ export function CreateSupplierForm() {
 export function SupplierEditor({ supplier }: { supplier: SupplierRecord }) {
   const toast = useToast()
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [pending, setPending] = useState(false)
+
+  if (!canEdit) {
+    return (
+      <div>
+        <p className="text-[16px]">{supplier.name}</p>
+        <p className="mt-1 text-[13px] text-ink-3">{supplier.website || "No website"} · {supplier.default_lead_days} lead days</p>
+      </div>
+    )
+  }
 
   return (
     <form

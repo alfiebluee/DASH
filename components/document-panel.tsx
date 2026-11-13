@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
-import { sendDocument, uploadDocument } from "@/app/(studio)/studio/projects/actions"
+import { deleteDocument, sendDocument, uploadDocument } from "@/app/(studio)/studio/projects/actions"
+import { useCanEdit } from "@/components/studio-access"
 import { useToast } from "@/components/toast-provider"
 import { Button } from "@/components/ui/button"
 import { kindLabel, statusClass, uploadKinds } from "@/lib/labels"
@@ -12,12 +13,14 @@ import type { DocumentRecord } from "@/lib/records"
 export function DocumentPanel({ projectId, documents }: { projectId: string; documents: DocumentRecord[] }) {
   const toast = useToast()
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [pending, setPending] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [defaults, setDefaults] = useState<{ kind: string; title: string }>({ kind: "proposal", title: "" })
 
   return (
     <div className="grid gap-6">
-      <form
+      {canEdit ? <form
         className="grid gap-3 rounded-[28px] bg-surface p-6 shadow-[var(--shadow)]"
         onSubmit={async (event) => {
           event.preventDefault()
@@ -61,8 +64,8 @@ export function DocumentPanel({ projectId, documents }: { projectId: string; doc
         <Button type="submit" disabled={pending}>
           Upload
         </Button>
-      </form>
-      {documents.length === 0 ? <p className="text-[15px] text-ink-2">No documents yet. Upload a proposal, scope, or set design.</p> : null}
+      </form> : null}
+      {documents.length === 0 ? <p className="text-[15px] text-ink-2">{canEdit ? "No documents yet. Upload a proposal, scope, or set design." : "No documents yet."}</p> : null}
       <ul className="grid gap-3">
         {documents.map((document) => (
           <li key={document.id} className="rounded-[24px] bg-surface p-4 shadow-[var(--shadow)]">
@@ -81,7 +84,7 @@ export function DocumentPanel({ projectId, documents }: { projectId: string; doc
                   Preview
                 </a>
               ) : null}
-              {document.status !== "approved" && document.status !== "sent" ? (
+              {canEdit && document.status !== "approved" && document.status !== "sent" ? (
                 <button
                   type="button"
                   className="text-ink"
@@ -94,7 +97,7 @@ export function DocumentPanel({ projectId, documents }: { projectId: string; doc
                   Send to client
                 </button>
               ) : null}
-              {uploadKinds.includes(document.kind as (typeof uploadKinds)[number]) ? (
+              {canEdit && uploadKinds.includes(document.kind as (typeof uploadKinds)[number]) ? (
                 <button
                   type="button"
                   className="text-ink-2"
@@ -103,6 +106,22 @@ export function DocumentPanel({ projectId, documents }: { projectId: string; doc
                   New version
                 </button>
               ) : null}
+              {canEdit ? <button
+                type="button"
+                className="text-ink-2"
+                aria-label={`Delete ${document.title} v${document.version}`}
+                disabled={deletingId === document.id}
+                onClick={async () => {
+                  if (!window.confirm(`Delete ${document.title} v${document.version}?`)) return
+                  setDeletingId(document.id)
+                  const result = await deleteDocument(document.id)
+                  setDeletingId(null)
+                  toast(result.message)
+                  if (result.ok) router.refresh()
+                }}
+              >
+                Delete
+              </button> : null}
             </div>
           </li>
         ))}

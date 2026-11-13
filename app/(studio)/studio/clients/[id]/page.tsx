@@ -5,11 +5,13 @@ import { ClientEditor } from "@/components/client-editor"
 import { InviteForm } from "@/components/invite-form"
 import { loadClient, loadProjects } from "@/lib/data"
 import { stageLabel } from "@/lib/labels"
+import { getSession } from "@/lib/session"
 
 export default async function ClientPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const [client, projects] = await Promise.all([loadClient(id), loadProjects()])
+  const [client, projects, session] = await Promise.all([loadClient(id), loadProjects(), getSession()])
   if (!client) notFound()
+  const canEdit = session?.role === "owner"
   const own = projects.filter((project) => project.client_id === client.id)
 
   return (
@@ -23,15 +25,17 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
             <ClientEditor client={client} />
           </div>
         </section>
-        <section className="rounded-[28px] bg-surface p-6 shadow-[var(--shadow)]">
-          <h2 className="text-[18px] font-medium">Portal invite</h2>
-          <p className="mt-2 text-[14px] leading-6 text-ink-2">
-            Supabase emails a magic link. The person can then see only this client&apos;s projects.
-          </p>
-          <div className="mt-4">
-            <InviteForm clientId={client.id} email={client.email} />
-          </div>
-        </section>
+        {canEdit ? (
+          <section className="rounded-[28px] bg-surface p-6 shadow-[var(--shadow)]">
+            <h2 className="text-[18px] font-medium">Portal invite</h2>
+            <p className="mt-2 text-[14px] leading-6 text-ink-2">
+              Supabase emails a magic link. The person can then see only this client&apos;s projects.
+            </p>
+            <div className="mt-4">
+              <InviteForm clientId={client.id} email={client.email} />
+            </div>
+          </section>
+        ) : null}
       </div>
       <section className="mt-6">
         <h2 className="text-[18px] font-medium">Projects</h2>

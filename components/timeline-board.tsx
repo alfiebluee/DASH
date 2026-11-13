@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { updateProjectDates } from "@/app/(studio)/studio/projects/actions"
+import { useCanEdit } from "@/components/studio-access"
 import { useToast } from "@/components/toast-provider"
 import { addDays, diffDays, formatShort, mondayOf } from "@/lib/dates"
 import type { ProjectCard, SettingsRecord } from "@/lib/records"
@@ -25,6 +26,7 @@ export function TimelineBoard({
   const weeks = [0, 1, 2, 3, 4, 5].map((week) => addDays(start, week * 7))
   const toast = useToast()
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [drafts, setDrafts] = useState<Record<string, string>>({})
 
   function left(iso: string) {
@@ -51,11 +53,15 @@ export function TimelineBoard({
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-[18px] font-medium">Next six weeks</h2>
-          <p className="text-[13px] text-ink-3">Drag an end to move a deadline.</p>
+          <p className="text-[13px] text-ink-3">{canEdit ? "Drag an end to move a deadline." : "Deadlines for the next six weeks."}</p>
         </div>
-        <Link href="/studio/settings#away" className="rounded-full bg-column px-3 py-2 text-[13px] text-ink">
-          {settings.away_from ? `Away from ${formatShort(settings.away_from)}` : "Set away"}
-        </Link>
+        {canEdit ? (
+          <Link href="/studio/settings#away" className="rounded-full bg-column px-3 py-2 text-[13px] text-ink">
+            {settings.away_from ? `Away from ${formatShort(settings.away_from)}` : "Set away"}
+          </Link>
+        ) : (
+          <p className="text-[13px] text-ink-3">{settings.away_from ? `Away from ${formatShort(settings.away_from)}` : "No time away"}</p>
+        )}
       </div>
       <div className="relative min-w-0 overflow-hidden">
         <div>
@@ -82,34 +88,38 @@ export function TimelineBoard({
                     className="absolute top-1 h-7 rounded-full bg-brand-tint"
                     style={{ left: along(left(project.start_date && project.start_date < due ? project.start_date : due)), width: "12px" }}
                   />
-                  <button
-                    type="button"
-                    aria-label={`Move ${project.name} deadline`}
-                    className="absolute top-0 h-9 w-4 -translate-x-1/2 rounded-full bg-brand"
-                    style={{ left: along(left(due)) }}
-                    onPointerDown={(event) => {
-                      const track = event.currentTarget.parentElement
-                      if (!track) return
-                      const pointer = event.pointerId
-                      event.currentTarget.setPointerCapture(pointer)
-                      const move = (moveEvent: PointerEvent) => {
-                        const rect = track.getBoundingClientRect()
-                        const ratio = Math.min(1, Math.max(0, (moveEvent.clientX - rect.left - 112) / Math.max(rect.width - 112, 1)))
-                        const next = addDays(start, Math.round(ratio * (daysInView - 1)))
-                        setDrafts((current) => ({ ...current, [project.id]: next }))
-                      }
-                      const up = (upEvent: PointerEvent) => {
-                        track.removeEventListener("pointermove", move)
-                        track.removeEventListener("pointerup", up)
-                        const rect = track.getBoundingClientRect()
-                        const ratio = Math.min(1, Math.max(0, (upEvent.clientX - rect.left - 112) / Math.max(rect.width - 112, 1)))
-                        const next = addDays(start, Math.round(ratio * (daysInView - 1)))
-                        void saveDue(project, next)
-                      }
-                      track.addEventListener("pointermove", move)
-                      track.addEventListener("pointerup", up)
-                    }}
-                  />
+                  {canEdit ? (
+                    <button
+                      type="button"
+                      aria-label={`Move ${project.name} deadline`}
+                      className="absolute top-0 h-9 w-4 -translate-x-1/2 rounded-full bg-brand"
+                      style={{ left: along(left(due)) }}
+                      onPointerDown={(event) => {
+                        const track = event.currentTarget.parentElement
+                        if (!track) return
+                        const pointer = event.pointerId
+                        event.currentTarget.setPointerCapture(pointer)
+                        const move = (moveEvent: PointerEvent) => {
+                          const rect = track.getBoundingClientRect()
+                          const ratio = Math.min(1, Math.max(0, (moveEvent.clientX - rect.left - 112) / Math.max(rect.width - 112, 1)))
+                          const next = addDays(start, Math.round(ratio * (daysInView - 1)))
+                          setDrafts((current) => ({ ...current, [project.id]: next }))
+                        }
+                        const up = (upEvent: PointerEvent) => {
+                          track.removeEventListener("pointermove", move)
+                          track.removeEventListener("pointerup", up)
+                          const rect = track.getBoundingClientRect()
+                          const ratio = Math.min(1, Math.max(0, (upEvent.clientX - rect.left - 112) / Math.max(rect.width - 112, 1)))
+                          const next = addDays(start, Math.round(ratio * (daysInView - 1)))
+                          void saveDue(project, next)
+                        }
+                        track.addEventListener("pointermove", move)
+                        track.addEventListener("pointerup", up)
+                      }}
+                    />
+                  ) : (
+                    <span className="absolute top-0 h-9 w-4 -translate-x-1/2 rounded-full bg-brand" style={{ left: along(left(due)) }} />
+                  )}
                   <span
                     className={`absolute top-2 whitespace-nowrap text-[12px] text-ink-2 ${left(due) > 72 ? "-translate-x-full" : "translate-x-3"}`}
                     style={{ left: along(left(due)) }}

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { saveProject } from "@/app/(studio)/studio/projects/actions"
+import { useCanEdit } from "@/components/studio-access"
 import { useToast } from "@/components/toast-provider"
 import { Button } from "@/components/ui/button"
 import { statusLabel, statuses } from "@/lib/labels"
@@ -12,7 +13,22 @@ import type { ClientRecord, ProjectCard } from "@/lib/records"
 export function ProjectEditor({ project, clients }: { project: ProjectCard; clients: ClientRecord[] }) {
   const toast = useToast()
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [pending, setPending] = useState(false)
+  const clientName = clients.find((client) => client.id === project.client_id)?.name ?? ""
+
+  if (!canEdit) {
+    return (
+      <dl className="grid gap-3 text-[15px]">
+        <div><dt className="text-[13px] text-ink-3">Client</dt><dd>{clientName}</dd></div>
+        <div><dt className="text-[13px] text-ink-3">Type</dt><dd>{project.type}</dd></div>
+        <div><dt className="text-[13px] text-ink-3">Status</dt><dd>{statusLabel(project.status)}</dd></div>
+        <div><dt className="text-[13px] text-ink-3">Start</dt><dd>{project.start_date ?? "Not set"}</dd></div>
+        <div><dt className="text-[13px] text-ink-3">Due</dt><dd>{project.due_date ?? "Not set"}</dd></div>
+        {project.description ? <div><dt className="text-[13px] text-ink-3">Description</dt><dd>{project.description}</dd></div> : null}
+      </dl>
+    )
+  }
 
   return (
     <form

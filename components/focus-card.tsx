@@ -6,6 +6,7 @@ import { useState } from "react"
 
 import { pinProject } from "@/app/(studio)/studio/projects/actions"
 import { StageProgress } from "@/components/stage-progress"
+import { useCanEdit } from "@/components/studio-access"
 import { useToast } from "@/components/toast-provider"
 import { deadlinePhrase } from "@/lib/dates"
 import { statusLabel } from "@/lib/labels"
@@ -22,6 +23,7 @@ function nextAction(project: ProjectCard): { href: string; label: string } {
 export function FocusCard({ project, today }: { project: ProjectCard; today: string }) {
   const toast = useToast()
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [pending, setPending] = useState(false)
   const action = nextAction(project)
   const subtitle = [project.client_name, project.type].filter(Boolean).join(" · ")
@@ -32,7 +34,7 @@ export function FocusCard({ project, today }: { project: ProjectCard; today: str
         <p className="text-[11px] uppercase tracking-[0.16em] text-ink-3">Focus</p>
         <div className="flex items-center gap-3 text-[13px]">
           <span className="text-ink-2">{statusLabel(project.status)}</span>
-          <button
+          {canEdit ? <button
             type="button"
             className="text-ink"
             disabled={pending}
@@ -45,7 +47,7 @@ export function FocusCard({ project, today }: { project: ProjectCard; today: str
             }}
           >
             {project.pinned ? "Unpin" : "Pin"}
-          </button>
+          </button> : null}
         </div>
       </div>
       <h2 className="mt-3 text-[32px] font-normal tracking-[-0.03em]">{project.name}</h2>

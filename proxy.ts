@@ -17,6 +17,7 @@ async function roleFor(
     .eq("id", data.user.id)
     .maybeSingle()
   if (profile?.role === "owner") return "owner"
+  if (profile?.role === "viewer") return "viewer"
   if (profile?.role === "client" && profile.client_id) return "client"
   return null
 }

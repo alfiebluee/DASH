@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { addCustomLine, ensureBudgetLines, removeCustomLine, saveBudgetAmount, sendBudget } from "@/app/(studio)/studio/projects/[id]/budget-actions"
+import { useCanEdit } from "@/components/studio-access"
 import { useToast } from "@/components/toast-provider"
 import { Button } from "@/components/ui/button"
 import { agreedTotal, contingencyIsHot, contingencyPosition, formatMoney, materialsLineAmount } from "@/lib/money"
@@ -24,6 +25,7 @@ export function BudgetPanel({
 }) {
   const toast = useToast()
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [pending, setPending] = useState(false)
   const planned = summary?.materials_planned ?? 0
   const storedMaterials = lines.find((line) => line.kind === "materials")?.amount ?? summary?.materials_line ?? 0
@@ -50,7 +52,7 @@ export function BudgetPanel({
   return (
     <div className="grid gap-4">
       {locked ? <p className="text-[15px] text-ink-2">The client approved this budget. The agreed total is locked.</p> : null}
-      {!ready ? (
+      {canEdit && !ready ? (
         <section className="rounded-[28px] bg-surface p-6 shadow-[var(--shadow)]">
           <h2 className="text-[18px] font-medium">Budget lines</h2>
           <p className="mt-2 text-[14px] text-ink-2">Design & Delivery, Handyman, Materials and Contingency.</p>
@@ -63,8 +65,8 @@ export function BudgetPanel({
         <section key={line.id} className="rounded-[24px] bg-surface p-4 shadow-[var(--shadow)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-[16px]">{line.label}</h2>
-            {line.kind === "materials" ? (
-              <p aria-label="Materials amount">{formatMoney(materialsAmount)}</p>
+            {line.kind === "materials" || !canEdit ? (
+              <p aria-label={line.kind === "materials" ? "Materials amount" : undefined}>{formatMoney(line.kind === "materials" ? materialsAmount : line.amount)}</p>
             ) : (
               <input
                 aria-label={`${line.label} amount`}
@@ -87,14 +89,14 @@ export function BudgetPanel({
               {locked ? "Frozen when the budget was approved." : "Follows the materials list until the client approves."}
             </p>
           ) : null}
-          {line.kind === "other" && !locked ? (
+          {canEdit && line.kind === "other" && !locked ? (
             <button type="button" className="mt-2 text-[13px] text-ink-2" disabled={pending} onClick={() => void run(() => removeCustomLine(projectId, line.id))}>
               Remove {line.label}
             </button>
           ) : null}
         </section>
       ))}
-      {!locked ? (
+      {canEdit && !locked ? (
         <form
           className="flex flex-wrap items-end gap-3 rounded-[24px] bg-surface p-4 shadow-[var(--shadow)]"
           onSubmit={(event) => {
@@ -128,7 +130,7 @@ export function BudgetPanel({
           <div className="flex justify-between gap-4 text-[18px]"><dt>Agreed total</dt><dd>{formatMoney(locked ? summary?.agreed_total ?? total : total)}</dd></div>
         </dl>
         {hot ? <p className="mt-3 text-[14px] text-danger">Contingency is over 90% used.</p> : null}
-        {!locked ? (
+        {canEdit && !locked ? (
           <Button type="button" className="mt-5" disabled={pending} onClick={() => void run(() => sendBudget(projectId))}>
             Send budget for approval
           </Button>

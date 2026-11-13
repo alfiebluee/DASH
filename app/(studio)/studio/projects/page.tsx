@@ -6,6 +6,7 @@ import { loadClients, loadProjects } from "@/lib/data"
 import { formatDue, stageLabel, stages, statusLabel, statuses } from "@/lib/labels"
 import { daysInStageLabel } from "@/lib/stages"
 import type { ProjectCard } from "@/lib/records"
+import { getSession } from "@/lib/session"
 
 function matches(project: ProjectCard, query: { stage?: string; status?: string; q?: string }) {
   if (query.stage && project.stage !== query.stage) return false
@@ -25,7 +26,8 @@ export default async function ProjectsPage({
   searchParams: Promise<{ stage?: string; status?: string; q?: string }>
 }) {
   const query = await searchParams
-  const [projects, clients] = await Promise.all([loadProjects(), loadClients()])
+  const [projects, clients, session] = await Promise.all([loadProjects(), loadClients(), getSession()])
+  const canEdit = session?.role === "owner"
   const visible = projects.filter((project) => matches(project, query))
   const search = query.q ?? ""
 
@@ -109,12 +111,14 @@ export default async function ProjectsPage({
           </table>
         </div>
       ) : null}
-      <section className="mt-8 max-w-xl rounded-[28px] bg-surface p-6 shadow-[var(--shadow)]">
-        <h2 className="text-[22px] font-normal">New project</h2>
-        <div className="mt-4">
-          <CreateProjectForm clients={clients} />
-        </div>
-      </section>
+      {canEdit ? (
+        <section className="mt-8 max-w-xl rounded-[28px] bg-surface p-6 shadow-[var(--shadow)]">
+          <h2 className="text-[22px] font-normal">New project</h2>
+          <div className="mt-4">
+            <CreateProjectForm clients={clients} />
+          </div>
+        </section>
+      ) : null}
     </main>
   )
 }

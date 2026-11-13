@@ -5,10 +5,12 @@ import { useEffect, useMemo, useState } from "react"
 
 import { CreateClientForm } from "@/components/create-client-form"
 import { CreateProjectForm } from "@/components/create-project-form"
+import { useCanEdit } from "@/components/studio-access"
 import { Modal } from "@/components/ui/dialog"
 import type { ClientRecord, ProjectCard } from "@/lib/records"
 
 export function CommandPalette({ projects, clients }: { projects: ProjectCard[]; clients: ClientRecord[] }) {
+  const canEdit = useCanEdit()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const [mode, setMode] = useState<"search" | "project" | "client">("search")
@@ -45,13 +47,13 @@ export function CommandPalette({ projects, clients }: { projects: ProjectCard[];
           setOpen(true)
         }}
       >
-        Add or find anything
+        {canEdit ? "Add or find anything" : "Find anything"}
       </button>
       <Modal
         open={open}
         onOpenChange={setOpen}
-        title={mode === "project" ? "New project" : mode === "client" ? "New client" : "Add or find anything"}
-        description="Search projects and clients, or create one."
+        title={mode === "project" ? "New project" : mode === "client" ? "New client" : canEdit ? "Add or find anything" : "Find anything"}
+        description={canEdit ? "Search projects and clients, or create one." : "Search projects and clients."}
       >
         {mode === "search" ? (
           <div className="grid gap-3">
@@ -62,14 +64,16 @@ export function CommandPalette({ projects, clients }: { projects: ProjectCard[];
               placeholder="Search"
               aria-label="Search"
             />
-            <div className="flex gap-2">
-              <button type="button" className="rounded-full bg-brand px-3 py-2 text-[13px] text-surface" onClick={() => setMode("project")}>
-                New project
-              </button>
-              <button type="button" className="rounded-full bg-column px-3 py-2 text-[13px]" onClick={() => setMode("client")}>
-                New client
-              </button>
-            </div>
+            {canEdit ? (
+              <div className="flex gap-2">
+                <button type="button" className="rounded-full bg-brand px-3 py-2 text-[13px] text-surface" onClick={() => setMode("project")}>
+                  New project
+                </button>
+                <button type="button" className="rounded-full bg-column px-3 py-2 text-[13px]" onClick={() => setMode("client")}>
+                  New client
+                </button>
+              </div>
+            ) : null}
             <ul className="grid gap-1">
               {projectHits.map((project) => (
                 <li key={project.id}>

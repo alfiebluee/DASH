@@ -19,14 +19,15 @@ function codeStep(email: string, error?: "code"): never {
   redirect(error ? `${target}&error=${error}` : target)
 }
 
-async function invitedKind(email: string): Promise<"owner" | "client" | null> {
+async function invitedKind(email: string): Promise<"owner" | "viewer" | "client" | null> {
   const admin = createAdmin()
   const rpc = await admin.rpc("sign_in_kind", { target_email: email })
-  if (!rpc.error && (rpc.data === "owner" || rpc.data === "client")) return rpc.data
-  if (rpc.error && staffByEmail(email)) return "owner"
+  if (!rpc.error && (rpc.data === "owner" || rpc.data === "viewer" || rpc.data === "client")) return rpc.data
+  const person = staffByEmail(email)
+  if (rpc.error && person) return person.access
   if (rpc.error) {
     const { data: profile } = await admin.from("profiles").select("role, client_id").eq("email", email).maybeSingle()
-    if (profile?.role === "owner") return "owner"
+    if (profile?.role === "owner" || profile?.role === "viewer") return profile.role
     if (profile?.role === "client" && profile.client_id) return "client"
   }
   return null
@@ -40,12 +41,12 @@ async function openSession(userId: string, email: string): Promise<never> {
       id: userId,
       email,
       full_name: person.full_name,
-      role: "owner",
+      role: person.access,
       client_id: null,
     })
   }
   const { data: profile } = await admin.from("profiles").select("role, client_id").eq("id", userId).maybeSingle()
-  if (profile?.role === "owner") redirect("/studio")
+  if (profile?.role === "owner" || profile?.role === "viewer") redirect("/studio")
   if (profile?.role === "client" && profile.client_id) redirect("/portal")
   const supabase = await createClient()
   await supabase.auth.signOut()
@@ -69,7 +70,7 @@ export async function signIn(formData: FormData) {
   const origin = (await headers()).get("origin") ?? appUrl()
   const options = {
     emailRedirectTo: `${origin}/auth/callback`,
-    shouldCreateUser: kind === "owner",
+    shouldCreateUser: kind === "owner" || kind === "viewer",
     data: person ? { full_name: person.full_name } : undefined,
   }
   let { error } = await supabase.auth.signInWithOtp({ email, options })

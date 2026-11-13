@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { approveProjectGate } from "@/app/(studio)/studio/projects/actions"
+import { useCanEdit } from "@/components/studio-access"
 import { useToast } from "@/components/toast-provider"
 import { Button } from "@/components/ui/button"
 import { approvalLabel, stageLabel, stages } from "@/lib/labels"
@@ -12,6 +13,7 @@ import type { ProjectGate } from "@/lib/records"
 export function ProjectApprovals({ gates }: { gates: ProjectGate[] }) {
   const toast = useToast()
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [busyId, setBusyId] = useState<string | null>(null)
   const groups = stages.flatMap((stage) => {
     const items = gates.filter((gate) => gate.gate_for_stage === stage)
@@ -33,8 +35,8 @@ export function ProjectApprovals({ gates }: { gates: ProjectGate[] }) {
                     <p className="text-[15px]">{approvalLabel(gate.kind)}</p>
                     <p className="text-[12px] text-ink-3">{gate.status === "approved" ? "Approved" : "Pending"}</p>
                   </div>
-                  {gate.status === "approved" ? (
-                    <span className="rounded-full bg-brand-tint px-3 py-1 text-[12px] text-brand-hover">Approved</span>
+                  {gate.status === "approved" || !canEdit ? (
+                    <span className={`rounded-full px-3 py-1 text-[12px] ${gate.status === "approved" ? "bg-brand-tint text-brand-hover" : "bg-column text-ink-3"}`}>{gate.status === "approved" ? "Approved" : "Pending"}</span>
                   ) : (
                     <Button
                       type="button"

@@ -142,6 +142,7 @@ export async function loadStaff(): Promise<StaffRow[]> {
       email: record.email,
       full_name: record.full_name,
       job_title: typeof record.job_title === "string" ? record.job_title : "",
+      access: record.access === "owner" ? "owner" : "viewer",
     }]
   })
 }

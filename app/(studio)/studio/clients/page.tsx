@@ -2,11 +2,13 @@ import Link from "next/link"
 
 import { CreateClientForm } from "@/components/create-client-form"
 import { loadClients, loadProjects } from "@/lib/data"
+import { getSession } from "@/lib/session"
 
 export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ archived?: string }> }) {
   const query = await searchParams
   const showArchived = query.archived === "1"
-  const [clients, projects] = await Promise.all([loadClients(), loadProjects()])
+  const [clients, projects, session] = await Promise.all([loadClients(), loadProjects(), getSession()])
+  const canEdit = session?.role === "owner"
   const visible = clients.filter((client) => (showArchived ? Boolean(client.archived_at) : !client.archived_at))
 
   return (
@@ -41,12 +43,14 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
           )
         })}
       </ul>
-      <section className="mt-8 max-w-xl rounded-[28px] bg-surface p-6 shadow-[var(--shadow)]">
-        <h2 className="text-[22px] font-normal">New client</h2>
-        <div className="mt-4">
-          <CreateClientForm />
-        </div>
-      </section>
+      {canEdit ? (
+        <section className="mt-8 max-w-xl rounded-[28px] bg-surface p-6 shadow-[var(--shadow)]">
+          <h2 className="text-[22px] font-normal">New client</h2>
+          <div className="mt-4">
+            <CreateClientForm />
+          </div>
+        </section>
+      ) : null}
     </main>
   )
 }

@@ -29,6 +29,8 @@ async function database() {
   `)
   await db.exec(readFileSync(resolve("supabase/migrations/20261112000000_foundation.sql"), "utf8"))
   await db.exec(readFileSync(resolve("supabase/migrations/20261113163000_project_stages.sql"), "utf8"))
+  await db.exec(readFileSync(resolve("supabase/migrations/20261113190000_viewer_role.sql"), "utf8"))
+  await db.exec(readFileSync(resolve("supabase/migrations/20261113191000_viewer_access.sql"), "utf8"))
   await db.exec(readFileSync(resolve("supabase/seed.sql"), "utf8"))
   const ring = await db.query<{ id: string }>("select id from clients where name = 'Ring'")
   const shark = await db.query<{ id: string }>("select id from clients where name = 'Shark Ninja'")
@@ -97,8 +99,8 @@ it("stops one client reading another client's projects, and hides item prices", 
   expect(privateDirectory.rows).toEqual([])
 }, 30_000)
 
-it("makes the named staff owners, with no client attached", async () => {
-  const { db } = await database()
+it("gives Alfie full access and Live Ops a look-only view", async () => {
+  const { db, ringId } = await database()
   await db.exec(`
     insert into auth.users (id, email, raw_user_meta_data) values
       ('${teddyId}', 'teddy@go-places.io', '{}'),
@@ -109,20 +111,37 @@ it("makes the named staff owners, with no client attached", async () => {
     "select email, full_name, role, client_id from profiles where role = 'owner' order by email",
   )
   expect(owners.rows).toEqual([
-    { email: "alexbutler@go-places.io", full_name: "Alex", role: "owner", client_id: null },
-    { email: "alfiebluee@gmail.com", full_name: "Test user", role: "owner", client_id: null },
-    { email: "riley@go-places.io", full_name: "Riley", role: "owner", client_id: null },
-    { email: "teddy@go-places.io", full_name: "Teddy", role: "owner", client_id: null },
+    { email: "alfiebluee@gmail.com", full_name: "Alfie", role: "owner", client_id: null },
+  ])
+  const viewers = await db.query<{ email: string; role: string }>(
+    "select email, role from profiles where role = 'viewer' order by email",
+  )
+  expect(viewers.rows).toEqual([
+    { email: "alexbutler@go-places.io", role: "viewer" },
+    { email: "riley@go-places.io", role: "viewer" },
+    { email: "teddy@go-places.io", role: "viewer" },
   ])
 
   await expect(
     db.exec(`insert into auth.users (id, email) values ('${strangerId}', 'stranger@example.com')`),
   ).rejects.toThrow(/not invited/i)
 
-  const teddy = await db.query<{ sign_in_kind: string | null }>("select sign_in_kind('Teddy@go-places.io')")
-  expect(teddy.rows[0]?.sign_in_kind).toBe("owner")
+  const teddyKind = await db.query<{ sign_in_kind: string | null }>("select sign_in_kind('Teddy@go-places.io')")
+  expect(teddyKind.rows[0]?.sign_in_kind).toBe("viewer")
+  const alfieKind = await db.query<{ sign_in_kind: string | null }>("select sign_in_kind('alfie@asiya.space')")
+  expect(alfieKind.rows[0]?.sign_in_kind).toBe("owner")
   const stranger = await db.query<{ sign_in_kind: string | null }>("select sign_in_kind('stranger@example.com')")
   expect(stranger.rows[0]?.sign_in_kind).toBeNull()
+
+  await asUser(db, teddyId)
+  const seen = await db.query<{ name: string }>("select name from projects order by name")
+  expect(seen.rows.map((row) => row.name)).toEqual(["Ring", "Shark Beauty", "Shark Home", "Shark Ninja"])
+  await expect(
+    db.exec(`insert into projects (client_id, name) values ('${ringId}', 'Nope')`),
+  ).rejects.toThrow(/row-level security|policy/i)
+  await db.exec("update projects set name = 'Changed' where name = 'Ring'")
+  const unchanged = await db.query<{ name: string }>("select name from projects where name = 'Ring'")
+  expect(unchanged.rows).toEqual([{ name: "Ring" }])
 }, 30_000)
 
 it("moves a project on when the stage document is approved, and marks late orders", async () => {

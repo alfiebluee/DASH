@@ -1,4 +1,4 @@
-export type Role = "owner" | "client"
+export type Role = "owner" | "viewer" | "client"
 
 export function redirectFor(pathname: string, role: Role | null): string | null {
   const studio = pathname === "/studio" || pathname.startsWith("/studio/")
@@ -11,7 +11,7 @@ export function redirectFor(pathname: string, role: Role | null): string | null 
     return null
   }
 
-  if (role === "owner") {
+  if (role === "owner" || role === "viewer") {
     if (login || portal || pathname === "/") return "/studio"
     return null
   }

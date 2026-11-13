@@ -6,7 +6,7 @@ import { approvalLabel, isApprovalKind, isStage, stageLabel, type Stage } from "
 import { blockingApprovals } from "@/lib/stages"
 import { ownerGuard, refreshSurfaces, saved } from "@/lib/mutate"
 import { createClient } from "@/lib/supabase/server"
-import { documentFormSchema, projectFormSchema, stageSchema } from "@/lib/validation/records"
+import { documentFormSchema, documentIdSchema, projectFormSchema, stageSchema } from "@/lib/validation/records"
 
 const fileTypes = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp", "image/gif"])
 
@@ -257,4 +257,30 @@ export async function sendDocument(documentId: string): Promise<ActionResult> {
   })
   refreshSurfaces(document.project_id)
   return saved("Sent to the client.")
+}
+
+export async function deleteDocument(documentId: string): Promise<ActionResult> {
+  const guard = await ownerGuard()
+  if (!("session" in guard)) return guard
+  const parsed = documentIdSchema.safeParse(documentId)
+  if (!parsed.success) return failed(parsed.error.issues[0]?.message ?? "That document is not valid.")
+  const supabase = await createClient()
+  const { data: document } = await supabase
+    .from("documents")
+    .select("id, project_id, title, version, file_path")
+    .eq("id", parsed.data)
+    .maybeSingle()
+  if (!document) return failed("Document not found.")
+  const { error } = await supabase.from("documents").delete().eq("id", document.id)
+  if (error) return failed("The document could not be deleted.")
+  if (document.file_path) await supabase.storage.from("documents").remove([document.file_path])
+  await supabase.from("activity_log").insert({
+    project_id: document.project_id,
+    actor_id: guard.session.id,
+    type: "document",
+    message: `Deleted ${document.title} v${document.version}`,
+    client_visible: false,
+  })
+  refreshSurfaces(document.project_id)
+  return saved("Document deleted.")
 }

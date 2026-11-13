@@ -4,13 +4,16 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { inviteClient } from "@/app/(studio)/studio/clients/actions"
+import { useCanEdit } from "@/components/studio-access"
 import { useToast } from "@/components/toast-provider"
 import { Button } from "@/components/ui/button"
 
 export function InviteForm({ clientId, email }: { clientId: string; email: string | null }) {
   const toast = useToast()
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [pending, setPending] = useState(false)
+  if (!canEdit) return null
 
   return (
     <form

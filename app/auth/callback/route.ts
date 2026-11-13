@@ -41,13 +41,13 @@ export async function GET(request: Request) {
       id: data.user.id,
       email,
       full_name: person.full_name,
-      role: "owner",
+      role: person.access,
       client_id: null,
     })
   }
 
   const { data: profile } = await supabase.from("profiles").select("role, client_id").eq("id", data.user.id).maybeSingle()
-  if (profile?.role === "owner") return NextResponse.redirect(new URL("/studio", origin))
+  if (profile?.role === "owner" || profile?.role === "viewer") return NextResponse.redirect(new URL("/studio", origin))
   if (profile?.role === "client" && profile.client_id) return NextResponse.redirect(new URL("/portal", origin))
 
   await supabase.auth.signOut()

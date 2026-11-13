@@ -31,6 +31,10 @@ export function TimelineBoard({
     return Math.min(100, Math.max(0, (diffDays(iso, start) / daysInView) * 100))
   }
 
+  function along(percent: number) {
+    return `calc(7rem + (100% - 7rem) * ${percent / 100})`
+  }
+
   async function saveDue(project: ProjectCard, due: string) {
     const result = await updateProjectDates(project.id, { due_date: due })
     toast(result.message)
@@ -53,8 +57,8 @@ export function TimelineBoard({
           {settings.away_from ? `Away from ${formatShort(settings.away_from)}` : "Set away"}
         </Link>
       </div>
-      <div className="relative overflow-x-auto">
-        <div className="min-w-[720px]">
+      <div className="relative min-w-0 overflow-hidden">
+        <div>
           <div className="grid grid-cols-6 text-[12px] uppercase tracking-[0.08em] text-ink-3">
             {weeks.map((week) => (
               <p key={week}>{formatShort(week)}</p>
@@ -72,17 +76,17 @@ export function TimelineBoard({
               const due = drafts[project.id] ?? project.due_date
               if (!due) return null
               return (
-                <div key={project.id} className="relative h-10">
+                <div key={project.id} className="relative h-10 overflow-hidden">
                   <p className="absolute left-0 top-0 w-28 truncate text-[13px] text-ink">{project.name}</p>
                   <div
                     className="absolute top-1 h-7 rounded-full bg-brand-tint"
-                    style={{ left: `calc(7rem + ${left(project.start_date && project.start_date < due ? project.start_date : due)}%)`, width: "12px" }}
+                    style={{ left: along(left(project.start_date && project.start_date < due ? project.start_date : due)), width: "12px" }}
                   />
                   <button
                     type="button"
                     aria-label={`Move ${project.name} deadline`}
-                    className="absolute top-0 h-9 w-4 rounded-full bg-brand"
-                    style={{ left: `calc(7rem + ${left(due)}%)` }}
+                    className="absolute top-0 h-9 w-4 -translate-x-1/2 rounded-full bg-brand"
+                    style={{ left: along(left(due)) }}
                     onPointerDown={(event) => {
                       const track = event.currentTarget.parentElement
                       if (!track) return
@@ -106,7 +110,10 @@ export function TimelineBoard({
                       track.addEventListener("pointerup", up)
                     }}
                   />
-                  <span className="absolute top-2 text-[12px] text-ink-2" style={{ left: `calc(8rem + ${left(due)}%)` }}>
+                  <span
+                    className={`absolute top-2 whitespace-nowrap text-[12px] text-ink-2 ${left(due) > 72 ? "-translate-x-full" : "translate-x-3"}`}
+                    style={{ left: along(left(due)) }}
+                  >
                     {formatShort(due)}
                   </span>
                 </div>

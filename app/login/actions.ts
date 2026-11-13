@@ -32,7 +32,7 @@ async function invitedKind(email: string): Promise<"owner" | "client" | null> {
   return null
 }
 
-async function openSession(userId: string, email: string) {
+async function openSession(userId: string, email: string): Promise<never> {
   const person = staffByEmail(email)
   const admin = createAdmin()
   if (person) {
@@ -79,11 +79,23 @@ export async function signIn(formData: FormData) {
     const retry = await supabase.auth.signInWithOtp({ email, options })
     error = retry.error
   }
-  if (error?.code === "over_email_send_rate_limit" && cooldownSeconds(error.message) > 0) {
-    codeStep(email)
+  if (error?.code === "over_email_send_rate_limit") {
+    if (cooldownSeconds(error.message) > 0) codeStep(email)
+    await signInFromLink(email)
   }
   if (error) redirect("/login?error=send")
   codeStep(email)
+}
+
+async function signInFromLink(email: string) {
+  const admin = createAdmin()
+  const link = await admin.auth.admin.generateLink({ type: "magiclink", email })
+  const tokenHash = link.data.properties?.hashed_token
+  if (link.error || !tokenHash) redirect("/login?error=send")
+  const supabase = await createClient()
+  const verified = await supabase.auth.verifyOtp({ type: "email", token_hash: tokenHash })
+  if (verified.error || !verified.data.user) redirect("/login?error=send")
+  await openSession(verified.data.user.id, email)
 }
 
 export async function verifyCode(formData: FormData) {

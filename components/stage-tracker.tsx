@@ -45,33 +45,31 @@ export function StageTracker({ projectId, stage, gates }: { projectId: string; s
 
   return (
     <div>
-      <ol className="flex items-stretch gap-1 overflow-x-auto pb-1">
+      <ol className="grid grid-cols-2 gap-1 sm:grid-cols-7">
         {stages.map((item, index) => {
           const done = index < current
           const here = index === current
           const between = gates.filter((gate) => gate.gate_for_stage === item)
           return (
-            <li key={item} className="flex min-w-[108px] flex-1 items-stretch">
+            <li key={item} className="flex min-w-0 flex-col">
               <button
                 type="button"
                 aria-current={here ? "step" : undefined}
-                className={`flex w-full items-center gap-2 rounded-2xl px-3 py-3 text-left text-[12px] uppercase tracking-[0.06em] ${here ? "bg-brand text-surface" : done ? "bg-brand-tint text-ink" : "bg-column text-ink-3"}`}
+                className={`flex w-full min-w-0 flex-1 flex-col items-start gap-1 rounded-2xl px-2 py-2 text-left text-[10px] uppercase leading-tight tracking-[0.04em] break-words ${here ? "bg-brand text-surface" : done ? "bg-brand-tint text-ink" : "bg-column text-ink-3"}`}
                 onClick={() => choose(item)}
               >
                 {done ? <Check className="size-3.5 shrink-0" aria-hidden /> : null}
                 {stageLabel(item)}
               </button>
-              {index < stages.length - 1 ? (
-                <span className="flex w-3 shrink-0 flex-col items-center justify-center gap-1" aria-hidden={between.length === 0}>
-                  {between.map((gate) => (
-                    <span
-                      key={gate.id}
-                      title={`${approvalLabel(gate.kind)} · ${gate.status === "approved" ? "approved" : "pending"}`}
-                      className={`size-2 rounded-full ${gate.status === "approved" ? "bg-brand" : "bg-ink-3"}`}
-                    />
-                  ))}
-                </span>
-              ) : null}
+              <span className="mt-1 flex h-2 gap-1" aria-hidden={between.length === 0}>
+                {between.map((gate) => (
+                  <span
+                    key={gate.id}
+                    title={`${approvalLabel(gate.kind)} · ${gate.status === "approved" ? "approved" : "pending"}`}
+                    className={`size-2 rounded-full ${gate.status === "approved" ? "bg-brand" : "bg-ink-3"}`}
+                  />
+                ))}
+              </span>
             </li>
           )
         })}

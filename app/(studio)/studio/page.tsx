@@ -20,7 +20,7 @@ export default async function StudioHome({ searchParams }: { searchParams: Promi
   const focus = selectFocus(open, today, params.focus)
 
   return (
-    <main>
+    <main className="min-w-0">
       <p className="text-[12px] uppercase tracking-[0.16em] text-ink-3">{formatToday(new Date())}</p>
       <h1 className="mt-2 text-[40px] font-light tracking-[-0.03em] text-ink">
         {greetingFor(new Date())}, {session?.name}

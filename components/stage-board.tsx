@@ -63,7 +63,7 @@ export function StageBoard({
   }
 
   return (
-    <section className="rounded-[28px] bg-surface p-4 shadow-[var(--shadow)] sm:p-6">
+    <section className="min-w-0 rounded-[28px] bg-surface p-4 shadow-[var(--shadow)] sm:p-6">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-[18px] font-medium">Stages</h2>
@@ -73,11 +73,11 @@ export function StageBoard({
           New
         </Button>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-7">
         {stages.map((stage) => (
           <div
             key={stage}
-            className="min-w-[180px] flex-1 rounded-[22px] bg-column p-2"
+            className="min-w-0 rounded-[22px] bg-column p-2"
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => {
               event.preventDefault()
@@ -85,7 +85,7 @@ export function StageBoard({
               if (id) void move(id, stage)
             }}
           >
-            <p className="px-2 py-2 text-[11px] uppercase tracking-[0.12em] text-ink-3">
+            <p className="px-1 py-2 text-[10px] uppercase leading-tight tracking-[0.04em] text-ink-3">
               {stageLabel(stage)} {items.filter((item) => item.stage === stage).length}
             </p>
             <div className="grid gap-2">
@@ -96,14 +96,14 @@ export function StageBoard({
                     key={project.id}
                     draggable
                     onDragStart={(event) => event.dataTransfer.setData("text/plain", project.id)}
-                    className={`rounded-[18px] bg-surface p-3 shadow-[var(--shadow)] ${focusId === project.id ? "ring-2 ring-brand" : ""}`}
+                    className={`min-w-0 rounded-[18px] bg-surface p-3 shadow-[var(--shadow)] ${focusId === project.id ? "ring-2 ring-brand" : ""}`}
                   >
-                    <p className="text-[12px] text-ink-3">{project.client_name}</p>
-                    <Link href={`/studio/projects/${project.id}`} className="mt-1 block text-[14px] font-medium text-ink">
+                    <p className="truncate text-[12px] text-ink-3">{project.client_name}</p>
+                    <Link href={`/studio/projects/${project.id}`} className="mt-1 block break-words text-[14px] font-medium leading-snug text-ink">
                       {project.name}
                     </Link>
                     {awaitingLabel(stage, project.gates) ? (
-                      <p className="mt-2 w-fit rounded-full bg-focus px-2 py-1 text-[11px] text-ink">Awaiting: {awaitingLabel(stage, project.gates)}</p>
+                      <p className="mt-2 break-words rounded-2xl bg-focus px-2 py-1 text-[11px] leading-snug text-ink">Awaiting: {awaitingLabel(stage, project.gates)}</p>
                     ) : null}
                     <p className="mt-2 text-[12px] text-ink-2">{daysInStageLabel(project.stage_entered_at)} in stage</p>
                   </article>

@@ -28,8 +28,8 @@ async function database() {
     $$;
   `)
   await db.exec(readFileSync(resolve("supabase/migrations/20261112000000_foundation.sql"), "utf8"))
-  await db.exec(readFileSync(resolve("supabase/seed.sql"), "utf8"))
   await db.exec(readFileSync(resolve("supabase/migrations/20261113163000_project_stages.sql"), "utf8"))
+  await db.exec(readFileSync(resolve("supabase/seed.sql"), "utf8"))
   const ring = await db.query<{ id: string }>("select id from clients where name = 'Ring'")
   const shark = await db.query<{ id: string }>("select id from clients where name = 'Shark Ninja'")
   const ringProject = await db.query<{ id: string }>("select id from projects where name = 'Ring'")
@@ -139,7 +139,7 @@ it("moves a project on when the stage document is approved, and marks late order
   const stage = await db.query<{ stage: string }>(`select stage from projects where id = '${enquiry}'`)
   expect(stage.rows[0]?.stage).toBe("pipeline")
   const ringStage = await db.query<{ stage: string }>("select stage from projects where name = 'Ring'")
-  expect(ringStage.rows[0]?.stage).toBe("set_design")
+  expect(ringStage.rows[0]?.stage).toBe("set_build")
   const history = await db.query<{ stage: string }>(`select stage from project_stage_history where project_id = '${enquiry}' and exited_at is null`)
   expect(history.rows[0]?.stage).toBe("pipeline")
   const proposalGate = await db.query<{ gate_for_stage: string }>(

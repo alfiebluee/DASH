@@ -27,7 +27,7 @@ export function FocusCard({ project, today }: { project: ProjectCard; today: str
   const subtitle = [project.client_name, project.type].filter(Boolean).join(" · ")
 
   return (
-    <section data-testid="focus-card" className="rounded-[28px] bg-focus p-6 shadow-[var(--shadow)] sm:p-8">
+    <section data-testid="focus-card" className="min-w-0 rounded-[28px] bg-focus p-6 shadow-[var(--shadow)] sm:p-8">
       <div className="flex items-center justify-between gap-3">
         <p className="text-[11px] uppercase tracking-[0.16em] text-ink-3">Focus</p>
         <div className="flex items-center gap-3 text-[13px]">

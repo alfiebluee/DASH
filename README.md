@@ -1,43 +1,40 @@
 # Studio
 
-A personal project control centre. One screen for what you are working on, what stage it is at, and what is due. Manage is the same data, seen from the back.
-
-## Run it
+One app, deployed at https://central-rust.vercel.app.
 
 ```bash
 npm install
 npm run dev
 ```
 
-No environment variables are required. The first launch writes seed data to `localStorage` under `studio.v1`.
+Open http://127.0.0.1:3000. Sign-in is a magic link. There is no password and no local preview session.
 
-## Scripts
+## Database
 
-| Script | What it does |
-|---|---|
-| `npm run dev` | Start the app |
-| `npm run check` | Typecheck, lint, unit tests, then the browser test |
-| `npm run test` | Vitest |
-| `npm run e2e` | Playwright |
-| `npm run build` | Typecheck and production build |
+Docker and the Supabase CLI are required before anyone can sign in.
 
-## Environment
+1. Install [Docker Desktop](https://docs.docker.com/desktop/) and start it.
+2. Install the CLI: `brew install supabase/tap/supabase`
+3. From this folder: `supabase start`
+4. Copy the API URL, publishable key, and secret key from `supabase status` into `.env.local` (see `.env.example`).
+5. `supabase db reset` applies `supabase/migrations` and `supabase/seed.sql`.
 
-Studio stores projects, dates, and settings in `localStorage`. Edit them in the app. There is no remote account.
+Local mail is the URL printed by `supabase status`, usually http://127.0.0.1:54324. Opening a magic link from that inbox signs you in. The seed does not send email and does not create passwords.
 
-| Variable | Purpose |
-|---|---|
-| `VITE_FEATURE_GCAL` | Left unset. Calendar sync is not part of this build. |
+These addresses become owners on first magic-link sign-in:
 
-## Shortcuts
+- alfiebluee@gmail.com (Test user, also `OWNER_EMAIL`)
+- teddy@go-places.io (Teddy)
+- alexbutler@go-places.io (Alex)
+- riley@go-places.io (Riley)
 
-`N` new project, `E` new date, `⌘K` or `/` command palette, `?` shortcut list, `Esc` close, `1`–`6` move the focused stage card, arrow keys shift a focused timeline edge.
+Seeded projects: Ring (client Ring), and Shark Beauty, Shark Home, and Shark Ninja (client Shark Ninja).
 
-## Where things live
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run e2e
+```
 
-- `src/components/ui` primitives
-- `src/components/dashboard` the control centre
-- `src/components/manage` the back office
-- `src/data` zod schemas, seed data, and the repository
-- `src/lib` dates, focus, capacity, timeline
-- `src/styles` tokens and global CSS
+Playwright reuses http://127.0.0.1:3000.

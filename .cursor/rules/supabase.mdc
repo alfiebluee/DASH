@@ -1,0 +1,12 @@
+---
+description: Supabase database, auth, storage and Row Level Security conventions
+globs: supabase/**, lib/supabase/**, app/**/actions.ts
+alwaysApply: false
+---
+
+- UUID primary keys. created_at and updated_at on every table, with a trigger keeping updated_at current.
+- RLS on every table. Owner: full access. Client: read only rows linked to their own client_id; insert only approvals for documents on their own projects.
+- Roles live in profiles.role ('owner' or 'client'). Use SQL helper functions is_owner() and my_client_id() in policies.
+- Never expose the secret key in browser code. The admin client is used only in server code and Edge Functions.
+- After every migration, regenerate types with supabase gen types into lib/database.types.ts and use them.
+- Storage: one private bucket called documents. Files are served with short-lived signed URLs only.

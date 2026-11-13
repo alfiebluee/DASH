@@ -45,4 +45,4 @@ tests/e2e/             Playwright tests
 
 ## Where this repo is today
 
-The Vite tracker stays in the repo root. Phase 1 of the new platform lives in `platform/` (Next.js, not a conversion of the Vite app). Read `docs/AUDIT.md` before changing the tracker. Work in `platform/` for the new app, and only on the current phase.
+This repository is the one Studio app. It is the Next.js app deployed at https://central-rust.vercel.app. There is no second tracker.

@@ -1,0 +1,12 @@
+---
+description: Xero integration rules
+globs: lib/xero/**, app/api/xero/**, supabase/functions/xero-*/**
+alwaysApply: false
+---
+
+- OAuth 2.0 authorisation code flow, connecting one organisation: the owner's.
+- Request the offline_access scope plus the accounting scopes needed for contacts, invoices and purchase orders.
+- Store tokens in the xero_connection table (owner-only RLS). Refresh the access token automatically before it expires.
+- Webhooks: verify the x-xero-signature header against the webhook key before processing anything. Reply fast and do the work in the background.
+- Never create a duplicate invoice: check the invoices table for an existing deposit or final invoice on the project first.
+- Log the result of every Xero call to activity_log, and show failures to the owner.

@@ -136,4 +136,4 @@ Phase 4 cannot be tested until these are added:
 
 ## What happens next
 
-Phase 1 is started in `platform/`. The Vite tracker stays in the repo root until that app can replace the link people are sent. Supabase is not connected on this machine yet, so sign-in there is local until the keys in `platform/.env.example` are filled in.
+The Vite tracker has been removed. This repository is the Next.js app, deployed at https://central-rust.vercel.app.

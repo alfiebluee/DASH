@@ -1,0 +1,16 @@
+---
+description: Design system and UI rules
+globs: app/**/*.tsx, components/**/*.tsx
+alwaysApply: false
+---
+
+- Light theme only. Minimal, Apple-style but creative, with a Control Centre feel.
+- Primary palette: blue and turquoise, plus a few accents. Define every colour as a CSS variable in globals.css; never hardcode hex values in components.
+- Use shadcn/ui components and Lucide icons.
+- No heavy text blocks. Prefer cards, status pills and progress indicators.
+- Every interactive element must work. If it is not implemented, remove it.
+- Every page: loading skeleton, empty state with one clear action, error state.
+- Mobile-first responsive layouts.
+- Toast feedback for every successful or failed action.
+- Follow the Experience section of docs/PRD.md: persistent shell, URL-synced state, optimistic updates with rollback, side sheets for quick edits, prefetching, skeletons, Undo toasts.
+- Match docs/design/current-dashboard.png for spacing, radius, typography and colour.

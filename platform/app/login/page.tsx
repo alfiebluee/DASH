@@ -5,7 +5,9 @@ import { signIn } from "./actions"
 const messages: Record<string, string> = {
   invalid: "Enter a valid email.",
   uninvited: "This email isn't invited.",
-  send: "The sign-in email could not be sent. Check the local mail service, then try again.",
+  send: "The sign-in email could not be sent. Try again in a minute.",
+  rate: "Too many sign-in emails were sent. Wait a while, then try again.",
+  link: "That sign-in link has expired or was already used. Request another one.",
   config: "Supabase is not running on this computer yet.",
 }
 

@@ -1,10 +1,11 @@
 import Link from "next/link"
 
+import { DeliveryWatch } from "@/components/delivery-watch"
 import { EmptyState } from "@/components/empty-state"
 import { FocusCard } from "@/components/focus-card"
 import { StageBoard } from "@/components/stage-board"
 import { TimelineBoard } from "@/components/timeline-board"
-import { loadClients, loadProjects, loadSettings } from "@/lib/data"
+import { loadClients, loadDeliveryWatch, loadProjects, loadSettings } from "@/lib/data"
 import { londonToday } from "@/lib/dates"
 import { selectFocus } from "@/lib/focus"
 import { formatToday, greetingFor } from "@/lib/greeting"
@@ -13,7 +14,7 @@ import { getSession } from "@/lib/session"
 export default async function StudioHome({ searchParams }: { searchParams: Promise<{ focus?: string }> }) {
   const params = await searchParams
   const session = await getSession()
-  const [projects, clients, settings] = await Promise.all([loadProjects(), loadClients(), loadSettings()])
+  const [projects, clients, settings, watch] = await Promise.all([loadProjects(), loadClients(), loadSettings(), loadDeliveryWatch()])
   const open = projects.filter((project) => project.status !== "archived")
   const today = londonToday()
   const focus = selectFocus(open, today, params.focus)
@@ -43,6 +44,9 @@ export default async function StudioHome({ searchParams }: { searchParams: Promi
           <TimelineBoard projects={open} settings={settings} today={today} />
         </div>
       )}
+      <div className="mt-4">
+        <DeliveryWatch late={watch.late} due={watch.due} />
+      </div>
     </main>
   )
 }

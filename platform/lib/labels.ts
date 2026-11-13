@@ -53,6 +53,16 @@ export function formatDue(due: string | null, status: Status): string {
   return `Due ${formatted}`
 }
 
+export function materialStatusLabel(status: string): string {
+  if (status === "to_order") return "To order"
+  if (status === "ordered") return "Ordered"
+  if (status === "delivered") return "Delivered"
+  if (status === "late") return "Late"
+  if (status === "cancelled") return "Cancelled"
+  if (status === "draft") return "Draft"
+  return status
+}
+
 export function statusClass(status: string): string {
   if (status === "approved" || status === "active") return "bg-brand-tint text-brand-hover"
   if (status === "changes_requested" || status === "on_hold") return "bg-danger/10 text-danger"

@@ -1,14 +1,26 @@
 import { createClient } from "@/lib/supabase/server"
+import { addDays, londonToday } from "@/lib/dates"
 import {
+  asNumber,
   toActivity,
+  toBudgetLine,
+  toBudgetSummary,
   toClient,
   toDocument,
+  toMaterial,
+  toOrder,
   toProject,
   type ActivityRecord,
   type AreaRecord,
+  type BudgetLineRecord,
+  type BudgetSummary,
+  type ClientMaterial,
   type ClientRecord,
+  type DeliveryWatch,
   type DocumentRecord,
   type MaterialRecord,
+  type MaterialStatus,
+  type OrderRecord,
   type ProjectCard,
   type SettingsRecord,
   type StaffRow,
@@ -23,7 +35,7 @@ export async function loadProjects(): Promise<ProjectCard[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from("projects")
-    .select("id, name, type, stage, status, due_date, start_date, pinned, description, client_id, updated_at, clients(name)")
+    .select("id, name, type, stage, status, due_date, start_date, pinned, description, client_id, contract_value, updated_at, clients(name)")
     .order("name")
   if (error) throw new Error(error.message)
   return rows(data).flatMap((row) => {
@@ -36,7 +48,7 @@ export async function loadProject(id: string): Promise<ProjectCard | null> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from("projects")
-    .select("id, name, type, stage, status, due_date, start_date, pinned, description, client_id, updated_at, clients(name)")
+    .select("id, name, type, stage, status, due_date, start_date, pinned, description, client_id, contract_value, updated_at, clients(name)")
     .eq("id", id)
     .maybeSingle()
   if (error) throw new Error(error.message)
@@ -140,41 +152,102 @@ export async function loadAreas(projectId: string): Promise<AreaRecord[]> {
   })
 }
 
+const materialColumns = "id, project_id, area_id, supplier_id, order_id, item, spec, quantity, unit_cost, line_total, actual_cost, link, notes, priority, lead_days, status, ordered_at, expected_at, delivered_at, sort_order"
+
 export async function loadMaterials(projectId: string): Promise<MaterialRecord[]> {
   const supabase = await createClient()
+  const { data, error } = await supabase.from("materials").select(materialColumns).eq("project_id", projectId).order("sort_order")
+  if (error) throw new Error(error.message)
+  return rows(data).flatMap((row) => {
+    const material = toMaterial(row)
+    return material ? [material] : []
+  })
+}
+
+export async function loadOrders(projectId: string): Promise<OrderRecord[]> {
+  const supabase = await createClient()
   const { data, error } = await supabase
-    .from("materials")
-    .select("id, project_id, area_id, supplier_id, item, spec, quantity, unit_cost, line_total, link, notes, priority, lead_days, status, ordered_at, expected_at, delivered_at")
+    .from("orders")
+    .select("id, project_id, supplier_id, reference, items_total, vat, vat_included, delivery_cost, total, paid_with, status, ordered_at, expected_at, delivered_at, suppliers(name)")
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: false })
+  if (error) throw new Error(error.message)
+  return rows(data).flatMap((row) => {
+    const order = toOrder(row)
+    return order ? [order] : []
+  })
+}
+
+export async function loadBudgetLines(projectId: string): Promise<BudgetLineRecord[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("budget_lines")
+    .select("id, project_id, label, kind, amount, sort_order")
     .eq("project_id", projectId)
     .order("sort_order")
   if (error) throw new Error(error.message)
   return rows(data).flatMap((row) => {
+    const line = toBudgetLine(row)
+    return line ? [line] : []
+  })
+}
+
+export async function loadBudgetSummary(projectId: string): Promise<BudgetSummary | null> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.from("project_budget").select("*").eq("project_id", projectId).maybeSingle()
+  if (error) throw new Error(error.message)
+  return toBudgetSummary(data)
+}
+
+export async function loadClientMaterials(projectId: string): Promise<ClientMaterial[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc("get_client_materials", { target_project: projectId })
+  if (error) throw new Error(error.message)
+  return rows(data).flatMap((row) => {
     if (!row || typeof row !== "object") return []
     const record = row as Record<string, unknown>
-    if (typeof record.id !== "string" || typeof record.item !== "string" || typeof record.project_id !== "string") return []
-    const priority = record.priority === "high" ? "high" : "normal"
+    if (typeof record.item !== "string") return []
     const status = record.status
-    const known = status === "to_order" || status === "ordered" || status === "delivered" || status === "late" || status === "cancelled"
+    const known: MaterialStatus[] = ["to_order", "ordered", "delivered", "late", "cancelled"]
+    const safe = known.find((item) => item === status) ?? "to_order"
     return [{
-      id: record.id,
-      project_id: record.project_id,
-      area_id: typeof record.area_id === "string" ? record.area_id : null,
-      supplier_id: typeof record.supplier_id === "string" ? record.supplier_id : null,
+      area: typeof record.area === "string" ? record.area : "",
       item: record.item,
-      spec: typeof record.spec === "string" ? record.spec : "",
-      quantity: numberField(record.quantity),
-      unit_cost: numberField(record.unit_cost),
-      line_total: numberField(record.line_total),
-      link: typeof record.link === "string" ? record.link : "",
-      notes: typeof record.notes === "string" ? record.notes : "",
-      priority,
-      lead_days: record.lead_days == null ? null : numberField(record.lead_days),
-      status: known ? status : "to_order",
-      ordered_at: typeof record.ordered_at === "string" ? record.ordered_at : null,
+      quantity: asNumber(record.quantity),
+      status: safe,
       expected_at: typeof record.expected_at === "string" ? record.expected_at : null,
       delivered_at: typeof record.delivered_at === "string" ? record.delivered_at : null,
     }]
   })
+}
+
+export async function loadDeliveryWatch(): Promise<{ late: DeliveryWatch[]; due: DeliveryWatch[] }> {
+  const supabase = await createClient()
+  const today = londonToday()
+  const until = addDays(today, 6)
+  const { data, error } = await supabase
+    .from("materials")
+    .select("id, item, status, expected_at, project_id, projects(name)")
+    .in("status", ["ordered", "late"])
+    .not("expected_at", "is", null)
+  if (error) throw new Error(error.message)
+  const late: DeliveryWatch[] = []
+  const due: DeliveryWatch[] = []
+  for (const row of rows(data)) {
+    if (!row || typeof row !== "object") continue
+    const record = row as Record<string, unknown>
+    if (typeof record.id !== "string" || typeof record.item !== "string" || typeof record.project_id !== "string") continue
+    if (typeof record.expected_at !== "string") continue
+    const status: MaterialStatus = record.status === "late" ? "late" : "ordered"
+    const project = Array.isArray(record.projects) ? record.projects[0] : record.projects
+    const projectName = project && typeof project === "object" && "name" in project && typeof project.name === "string" ? project.name : "Project"
+    const item: DeliveryWatch = { id: record.id, item: record.item, project_id: record.project_id, project_name: projectName, expected_at: record.expected_at, status }
+    if (status === "late" || record.expected_at < today) late.push(item)
+    else if (record.expected_at <= until) due.push(item)
+  }
+  late.sort((a, b) => a.expected_at.localeCompare(b.expected_at))
+  due.sort((a, b) => a.expected_at.localeCompare(b.expected_at))
+  return { late, due }
 }
 
 export async function loadDocuments(projectId: string): Promise<DocumentRecord[]> {

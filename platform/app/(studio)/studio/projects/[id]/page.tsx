@@ -1,18 +1,22 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
+import { BudgetPanel } from "@/components/budget-panel"
 import { DocumentPanel } from "@/components/document-panel"
-import { MaterialsPanel } from "@/components/materials-panel"
+import { MaterialsSheet } from "@/components/materials-sheet"
+import { OrdersPanel } from "@/components/orders-panel"
 import { ProjectEditor } from "@/components/project-editor"
 import { ProjectSwitcher } from "@/components/project-switcher"
 import { StageTracker } from "@/components/stage-tracker"
-import { loadActivity, loadAreas, loadClients, loadDocuments, loadMaterials, loadProject, loadProjects, loadSuppliers } from "@/lib/data"
+import { loadActivity, loadAreas, loadBudgetLines, loadBudgetSummary, loadClients, loadDocuments, loadMaterials, loadOrders, loadProject, loadProjects, loadSuppliers } from "@/lib/data"
 import { formatDue, stageLabel } from "@/lib/labels"
 
 const tabs = [
   { id: "overview", label: "Overview" },
   { id: "documents", label: "Documents" },
   { id: "materials", label: "Materials" },
+  { id: "orders", label: "Orders" },
+  { id: "budget", label: "Budget" },
   { id: "activity", label: "Activity" },
 ] as const
 
@@ -26,7 +30,7 @@ export default async function ProjectPage({
   const { id } = await params
   const query = await searchParams
   const tab = tabs.some((item) => item.id === query.tab) ? query.tab ?? "overview" : "overview"
-  const [project, projects, clients, documents, activity, areas, materials, suppliers] = await Promise.all([
+  const [project, projects, clients, documents, activity, areas, materials, suppliers, orders, budgetLines, budgetSummary] = await Promise.all([
     loadProject(id),
     loadProjects(),
     loadClients(),
@@ -35,18 +39,21 @@ export default async function ProjectPage({
     loadAreas(id),
     loadMaterials(id),
     loadSuppliers(),
+    loadOrders(id),
+    loadBudgetLines(id),
+    loadBudgetSummary(id),
   ])
   if (!project) notFound()
 
   return (
-    <main>
+    <main className="min-w-0">
       <ProjectSwitcher projects={projects} currentId={project.id} tab={tab} />
       <p className="mt-6 text-[12px] uppercase tracking-[0.16em] text-ink-3">
         {project.client_name} · {stageLabel(project.stage)}
       </p>
       <h1 className="mt-2 text-[36px] font-light tracking-[-0.03em]">{project.name}</h1>
       <p className="mt-2 text-[14px] text-ink-2">{formatDue(project.due_date, project.status)}</p>
-      <nav className="mt-6 flex gap-2" aria-label="Project">
+      <nav className="mt-6 flex flex-wrap gap-2" aria-label="Project">
         {tabs.map((item) => (
           <Link
             key={item.id}
@@ -75,8 +82,18 @@ export default async function ProjectPage({
         </div>
       ) : null}
       {tab === "materials" ? (
+        <div className="mt-6 min-w-0">
+          <MaterialsSheet projectId={project.id} areas={areas} materials={materials} suppliers={suppliers} orders={orders} />
+        </div>
+      ) : null}
+      {tab === "orders" ? (
         <div className="mt-6">
-          <MaterialsPanel projectId={project.id} areas={areas} materials={materials} suppliers={suppliers} />
+          <OrdersPanel projectId={project.id} orders={orders} materials={materials} suppliers={suppliers} />
+        </div>
+      ) : null}
+      {tab === "budget" ? (
+        <div className="mt-6">
+          <BudgetPanel projectId={project.id} lines={budgetLines} summary={budgetSummary} locked={project.contract_value != null} />
         </div>
       ) : null}
       {tab === "documents" ? (

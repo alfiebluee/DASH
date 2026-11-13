@@ -22,17 +22,17 @@ export async function GET(request: Request) {
 
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (error) return NextResponse.redirect(new URL("/login?error=send", origin))
+    if (error) return NextResponse.redirect(new URL("/login?error=link", origin))
   } else if (tokenHash && isOtpType(otpType)) {
     const { error } = await supabase.auth.verifyOtp({ type: otpType, token_hash: tokenHash })
-    if (error) return NextResponse.redirect(new URL("/login?error=send", origin))
+    if (error) return NextResponse.redirect(new URL("/login?error=link", origin))
   } else {
-    return NextResponse.redirect(new URL("/login?error=send", origin))
+    return NextResponse.redirect(new URL("/login?error=link", origin))
   }
 
   const { data } = await supabase.auth.getUser()
   const email = data.user?.email?.toLowerCase()
-  if (!data.user || !email) return NextResponse.redirect(new URL("/login?error=send", origin))
+  if (!data.user || !email) return NextResponse.redirect(new URL("/login?error=link", origin))
 
   const person = staffByEmail(email)
   if (person) {

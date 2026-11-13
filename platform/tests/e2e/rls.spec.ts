@@ -45,11 +45,19 @@ test("client A cannot read client B's projects", async () => {
   const ring = await clientSession(url, publishableKey, admin, "ring.portal@studio.test", ringClient)
   const shark = await clientSession(url, publishableKey, admin, "shark.portal@studio.test", sharkClient)
 
-  const ringProjects = await ring.from("projects").select("name")
+  const ringProjects = await ring.from("projects").select("name, client_id")
   expect(ringProjects.error).toBeNull()
-  expect(ringProjects.data?.map((row) => row.name).sort()).toEqual(["Ring"])
+  expect(ringProjects.data?.map((row) => row.name)).toContain("Ring")
+  expect(ringProjects.data?.every((row) => row.client_id === ringClient)).toBe(true)
+  expect(ringProjects.data?.map((row) => row.name)).not.toContain("Shark Beauty")
 
-  const sharkProjects = await shark.from("projects").select("name")
+  const sharkProjects = await shark.from("projects").select("name, client_id")
   expect(sharkProjects.error).toBeNull()
-  expect(sharkProjects.data?.map((row) => row.name).sort()).toEqual(["Shark Beauty", "Shark Home", "Shark Ninja"])
+  expect(sharkProjects.data?.map((row) => row.name)).toEqual(expect.arrayContaining(["Shark Beauty", "Shark Home", "Shark Ninja"]))
+  expect(sharkProjects.data?.every((row) => row.client_id === sharkClient)).toBe(true)
+  expect(sharkProjects.data?.map((row) => row.name)).not.toContain("Ring")
+
+  const leaked = await ring.from("projects").select("id").eq("client_id", sharkClient)
+  expect(leaked.error).toBeNull()
+  expect(leaked.data).toEqual([])
 })

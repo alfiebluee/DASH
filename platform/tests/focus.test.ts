@@ -14,6 +14,7 @@ function project(partial: Pick<ProjectCard, "id" | "name" | "stage" | "status" |
     description: "",
     client_id: "client",
     client_name: partial.name === "Ring" ? "Ring" : "Shark Ninja",
+    contract_value: null,
     updated_at: "2026-11-12T00:00:00Z",
     ...partial,
   }

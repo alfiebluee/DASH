@@ -8,7 +8,7 @@ import tseslint from "typescript-eslint"
 
 export default tseslint.config(
   {
-    ignores: ["dist", "node_modules", "playwright-report", "test-results", "blob-report", "coverage"],
+    ignores: ["dist", "node_modules", "playwright-report", "test-results", "blob-report", "coverage", "platform/**"],
   },
   {
     settings: { react: { version: "18.3" } },

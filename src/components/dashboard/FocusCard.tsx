@@ -80,7 +80,7 @@ export function FocusCard({
         </button>
       </h2>
       <p className="mt-1 text-[14px] text-ink-2">
-        {project.description} · {project.type}
+        {project.description ? `${project.description} · ${project.type}` : project.type}
       </p>
 
       <div className="mt-6 flex items-center gap-5">
@@ -179,13 +179,13 @@ function NextAction({ project }: { project: Project }) {
       <button
         type="button"
         className="min-w-0 flex-1 text-left text-[13px] leading-snug text-ink"
-        aria-label={`Edit next action, ${project.nextAction}`}
+        aria-label={project.nextAction ? `Edit next action, ${project.nextAction}` : "Add a next action"}
         onClick={() => {
           setDraft(project.nextAction)
           setEditing(true)
         }}
       >
-        {project.nextAction}
+        {project.nextAction || "Add a next action"}
       </button>
     )
   }

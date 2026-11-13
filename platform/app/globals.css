@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+:root {
+  --ground: #eef6f6;
+  --surface: #ffffff;
+  --surface-muted: #e7eef0;
+  --focus: #e5f6f3;
+  --column: #e8eef1;
+  --line: rgba(16, 40, 50, 0.08);
+  --ink: #102028;
+  --ink-2: #3d4e58;
+  --ink-3: #6a7b84;
+  --brand: #128ea3;
+  --brand-hover: #0d7384;
+  --turquoise: #7fd3d6;
+  --brand-tint: #dff4f4;
+  --danger: #b42318;
+  --shadow: 0 18px 50px rgba(16, 40, 50, 0.06);
+}
+
+@theme inline {
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-focus: var(--focus);
+  --color-column: var(--column);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-turquoise: var(--turquoise);
+  --color-brand-tint: var(--brand-tint);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background:
+    radial-gradient(circle at 8% -10%, color-mix(in srgb, var(--turquoise) 45%, transparent), transparent 32%),
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--brand) 16%, transparent), transparent 28%),
+    var(--ground);
+  color: var(--ink);
+  font-family: var(--font-inter), Inter, -apple-system, "SF Pro Display", sans-serif;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  outline-color: var(--brand);
+}
+
+input,
+select,
+textarea {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 0.5rem 0.75rem;
+  color: var(--ink);
+  font-size: 15px;
+}

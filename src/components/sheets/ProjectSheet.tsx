@@ -210,8 +210,9 @@ function CreateSheet({ stage }: { stage: Stage }) {
     pinned: false,
     archived: false,
   })
+  const [attempted, setAttempted] = useState(false)
   const parsed = projectCreateSchema.safeParse(draft)
-  const issues = parsed.success ? [] : parsed.error.issues
+  const issues = parsed.success || !attempted ? [] : parsed.error.issues
 
   return (
     <SheetFrame title="New project" description="It appears in the stage you choose.">
@@ -219,6 +220,7 @@ function CreateSheet({ stage }: { stage: Stage }) {
         className="flex min-h-0 flex-1 flex-col"
         onSubmit={(event) => {
           event.preventDefault()
+          setAttempted(true)
           if (!parsed.success) return
           void commands.mutations.createProject.mutateAsync(parsed.data).then((created) => {
             commands.ui.setSessionFocusId(created.id)
@@ -442,5 +444,6 @@ function ProjectEvents({ projectId, events }: { projectId: string; events: Studi
 function FieldError({ issues, field }: { issues: { path: PropertyKey[]; message: string }[]; field: string }) {
   const message = issues.find((issue) => issue.path[0] === field)?.message
   if (!message) return null
-  return <p className="text-[12px] text-[#B3261E]">{message}</p>
+  const readable = message.startsWith("Too small") ? "Give it a name." : message
+  return <p className="text-[12px] text-[#B3261E]">{readable}</p>
 }

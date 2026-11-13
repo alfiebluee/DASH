@@ -93,7 +93,8 @@ export function Timeline({
   }
 
   function beginEventDrag(event: ReactPointerEvent, item: StudioEvent) {
-    const track = event.currentTarget.closest("[data-track]")
+    const closestTrack = event.currentTarget.closest("[data-track]")
+    const track = closestTrack instanceof HTMLElement ? closestTrack : document.querySelector("[data-track]")
     if (!(track instanceof HTMLElement)) return
     event.preventDefault()
     event.stopPropagation()
@@ -127,7 +128,8 @@ export function Timeline({
   }
 
   return (
-    <Card className="p-4 sm:p-5" id="timeline" data-highlighted={commands.ui.highlightWeek ? "true" : "false"}>
+    <Card id="timeline" className={`p-4 sm:p-5 ${commands.ui.highlightWeek ? "ring-2 ring-turquoise" : ""}`}>
+      <div data-highlighted={commands.ui.highlightWeek ? "true" : "false"}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-[16px] font-medium tracking-tight">Next {smallNumberWord(weeks)} weeks</h2>
@@ -211,6 +213,7 @@ export function Timeline({
                           aria-label={`Start date for ${row.project.name}`}
                           className="absolute -left-1 top-0 h-full w-3 cursor-ew-resize"
                           onPointerDown={(event) => beginProjectDrag(event, row.project, "start")}
+                          onClick={() => commands.ui.openProject(row.project.id)}
                           onKeyDown={(event) => nudge(event, () => shiftProject(row.project, "start", event.key === "ArrowRight" ? 1 : -1))}
                         />
                       ) : null}
@@ -219,6 +222,7 @@ export function Timeline({
                         className="w-full truncate px-2.5 pr-4 text-right text-[11px] text-ink"
                         aria-label={`Move ${row.project.name}`}
                         onPointerDown={(event) => beginProjectDrag(event, row.project, "body")}
+                        onClick={() => commands.ui.openProject(row.project.id)}
                       >
                         {row.bar.label}
                       </button>
@@ -229,6 +233,7 @@ export function Timeline({
                           className="absolute -right-1.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 cursor-ew-resize rounded-full ring-2 ring-white"
                           style={{ background: colours.accent }}
                           onPointerDown={(event) => beginProjectDrag(event, row.project, "due")}
+                          onClick={() => commands.ui.openProject(row.project.id)}
                           onKeyDown={(event) => nudge(event, () => shiftProject(row.project, "due", event.key === "ArrowRight" ? 1 : -1))}
                         />
                       ) : null}
@@ -242,9 +247,10 @@ export function Timeline({
                         key={marker.id}
                         type="button"
                         aria-label={`${item.title}, ${shortDate(item.date)}`}
-                        className="absolute top-1/2 z-[1] -translate-x-1/2 -translate-y-1/2"
+                        className={`absolute top-1/2 z-[1] -translate-x-1/2 -translate-y-1/2 ${commands.ui.highlightWeek && inThisWeek(item.date, now) ? "rounded-full ring-2 ring-turquoise" : ""}`}
                         style={{ left: `${marker.left * 100}%` }}
                         onPointerDown={(event) => beginEventDrag(event, item)}
+                        onClick={() => commands.ui.openEvent(item.id)}
                         onKeyDown={(event) => {
                           if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return
                           event.preventDefault()
@@ -281,6 +287,7 @@ export function Timeline({
                   backgroundImage: "repeating-linear-gradient(135deg, transparent, transparent 4px, rgba(14,116,144,0.18) 4px, rgba(14,116,144,0.18) 8px)",
                 }}
                 onPointerDown={(event) => beginEventDrag(event, away)}
+                onClick={() => commands.ui.openEvent(away.id)}
               />
             </div>
           ) : null}
@@ -323,6 +330,7 @@ export function Timeline({
             </ul>
           </section>
         ))}
+      </div>
       </div>
     </Card>
   )

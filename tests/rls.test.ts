@@ -29,6 +29,7 @@ async function database() {
   `)
   await db.exec(readFileSync(resolve("supabase/migrations/20261112000000_foundation.sql"), "utf8"))
   await db.exec(readFileSync(resolve("supabase/seed.sql"), "utf8"))
+  await db.exec(readFileSync(resolve("supabase/migrations/20261113163000_project_stages.sql"), "utf8"))
   const ring = await db.query<{ id: string }>("select id from clients where name = 'Ring'")
   const shark = await db.query<{ id: string }>("select id from clients where name = 'Shark Ninja'")
   const ringProject = await db.query<{ id: string }>("select id from projects where name = 'Ring'")
@@ -136,7 +137,15 @@ it("moves a project on when the stage document is approved, and marks late order
   `)
 
   const stage = await db.query<{ stage: string }>(`select stage from projects where id = '${enquiry}'`)
-  expect(stage.rows[0]?.stage).toBe("brief")
+  expect(stage.rows[0]?.stage).toBe("pipeline")
+  const ringStage = await db.query<{ stage: string }>("select stage from projects where name = 'Ring'")
+  expect(ringStage.rows[0]?.stage).toBe("set_design")
+  const history = await db.query<{ stage: string }>(`select stage from project_stage_history where project_id = '${enquiry}' and exited_at is null`)
+  expect(history.rows[0]?.stage).toBe("pipeline")
+  const proposalGate = await db.query<{ gate_for_stage: string }>(
+    `select gate_for_stage from project_approvals where project_id = '${enquiry}' and kind = 'proposal_sent'`,
+  )
+  expect(proposalGate.rows[0]?.gate_for_stage).toBe("proposal")
 
   await db.exec("select mark_late_deliveries()")
   const material = await db.query<{ status: string }>("select status from materials where item = 'Paint'")

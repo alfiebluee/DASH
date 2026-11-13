@@ -4,6 +4,7 @@ import { CreateProjectForm } from "@/components/create-project-form"
 import { EmptyState } from "@/components/empty-state"
 import { loadClients, loadProjects } from "@/lib/data"
 import { formatDue, stageLabel, stages, statusLabel, statuses } from "@/lib/labels"
+import { daysInStageLabel } from "@/lib/stages"
 import type { ProjectCard } from "@/lib/records"
 
 function matches(project: ProjectCard, query: { stage?: string; status?: string; q?: string }) {
@@ -78,18 +79,36 @@ export default async function ProjectsPage({
       {projects.length > 0 && visible.length === 0 ? (
         <p className="mt-8 text-[15px] text-ink-2">No projects match these filters.</p>
       ) : null}
-      <ul className="mt-6 grid gap-3">
-        {visible.map((project) => (
-          <li key={project.id}>
-            <Link href={`/studio/projects/${project.id}`} className="block rounded-[24px] bg-surface p-4 shadow-[var(--shadow)]">
-              <span className="text-[18px]">{project.name}</span>
-              <span className="mt-1 block text-[13px] text-ink-3">
-                {project.client_name} · {stageLabel(project.stage)} · {formatDue(project.due_date, project.status)}
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {visible.length > 0 ? (
+        <div className="mt-6 overflow-x-auto rounded-[24px] bg-surface shadow-[var(--shadow)]">
+          <table className="w-full min-w-[720px] text-left">
+            <thead>
+              <tr className="text-[12px] uppercase tracking-[0.12em] text-ink-3">
+                <th className="px-4 py-3 font-normal">Project</th>
+                <th className="px-4 py-3 font-normal">Client</th>
+                <th className="px-4 py-3 font-normal">Stage</th>
+                <th className="px-4 py-3 font-normal">In stage</th>
+                <th className="px-4 py-3 font-normal">Due</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((project) => (
+                <tr key={project.id} className="border-t border-line">
+                  <td className="px-4 py-3">
+                    <Link href={`/studio/projects/${project.id}`} className="text-[16px] text-ink">
+                      {project.name}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-[14px] text-ink-2">{project.client_name}</td>
+                  <td className="px-4 py-3 text-[14px]">{stageLabel(project.stage)}</td>
+                  <td className="px-4 py-3 text-[14px] text-ink-2">{daysInStageLabel(project.stage_entered_at)}</td>
+                  <td className="px-4 py-3 text-[14px] text-ink-2">{formatDue(project.due_date, project.status)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
       <section className="mt-8 max-w-xl rounded-[28px] bg-surface p-6 shadow-[var(--shadow)]">
         <h2 className="text-[22px] font-normal">New project</h2>
         <div className="mt-4">

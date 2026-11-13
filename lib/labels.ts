@@ -1,5 +1,14 @@
-export const stages = ["pipeline", "brief", "design", "build", "review", "live"] as const
+export const stages = ["pipeline", "brief", "proposal", "set_design", "procurement", "set_build", "build_complete"] as const
 export type Stage = (typeof stages)[number]
+
+export const approvalKinds = [
+  "proposal_sent",
+  "design_approval",
+  "client_approval",
+  "live_operation_approval",
+  "contract_signed_invoice_sent",
+] as const
+export type ApprovalKind = (typeof approvalKinds)[number]
 
 export const statuses = ["active", "ongoing", "on_hold", "archived"] as const
 export type Status = (typeof statuses)[number]
@@ -18,10 +27,23 @@ export function isStatus(value: unknown): value is Status {
 export function stageLabel(stage: Stage): string {
   if (stage === "pipeline") return "Pipeline"
   if (stage === "brief") return "Brief"
-  if (stage === "design") return "Design"
-  if (stage === "build") return "Build"
-  if (stage === "review") return "Review"
-  return "Live"
+  if (stage === "proposal") return "Proposal"
+  if (stage === "set_design") return "Set Design Iterations"
+  if (stage === "procurement") return "Procurement"
+  if (stage === "set_build") return "Set Build"
+  return "Build Complete"
+}
+
+export function approvalLabel(kind: ApprovalKind): string {
+  if (kind === "proposal_sent") return "Proposal sent"
+  if (kind === "design_approval") return "Design approval"
+  if (kind === "client_approval") return "Client approval"
+  if (kind === "live_operation_approval") return "Live operation approval"
+  return "Contract signed, invoice sent"
+}
+
+export function isApprovalKind(value: unknown): value is ApprovalKind {
+  return typeof value === "string" && approvalKinds.includes(value as ApprovalKind)
 }
 
 export function statusLabel(status: Status): string {

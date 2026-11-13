@@ -4,20 +4,18 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
-import { moveProjectStage, pinProject } from "@/app/(studio)/studio/projects/actions"
+import { pinProject } from "@/app/(studio)/studio/projects/actions"
 import { StageProgress } from "@/components/stage-progress"
 import { useToast } from "@/components/toast-provider"
-import { Button } from "@/components/ui/button"
 import { deadlinePhrase } from "@/lib/dates"
-import { statusLabel, type Stage } from "@/lib/labels"
+import { statusLabel } from "@/lib/labels"
 import type { ProjectCard } from "@/lib/records"
 
-function nextAction(project: ProjectCard): { href?: string; stage?: Stage; label: string; confirm?: string } {
-  if (project.stage === "pipeline") return { href: `/studio/projects/${project.id}?tab=documents`, label: "Add proposal" }
-  if (project.stage === "brief") return { href: `/studio/projects/${project.id}?tab=documents`, label: "Add scope of work" }
-  if (project.stage === "design") return { href: `/studio/projects/${project.id}?tab=documents`, label: "Add set design" }
-  if (project.stage === "build") return { stage: "review", label: "Mark build finished", confirm: "Move this project to Review?" }
-  if (project.stage === "review") return { href: `/studio/projects/${project.id}?tab=documents`, label: "Open review" }
+function nextAction(project: ProjectCard): { href: string; label: string } {
+  if (project.stage === "pipeline" || project.stage === "brief") return { href: `/studio/projects/${project.id}?tab=documents`, label: "Add documents" }
+  if (project.stage === "proposal" || project.stage === "set_design") return { href: `/studio/projects/${project.id}#approvals`, label: "Review approvals" }
+  if (project.stage === "procurement") return { href: `/studio/projects/${project.id}?tab=materials`, label: "Open materials" }
+  if (project.stage === "set_build") return { href: `/studio/projects/${project.id}`, label: "Open build" }
   return { href: `/studio/projects/${project.id}`, label: "Open project" }
 }
 
@@ -59,27 +57,9 @@ export function FocusCard({ project, today }: { project: ProjectCard; today: str
         <StageProgress stage={project.stage} />
       </div>
       <div className="mt-6">
-        {action.href ? (
-          <Link href={action.href} className="inline-flex rounded-full bg-surface px-4 py-2 text-[14px] text-ink shadow-[var(--shadow)]">
-            {action.label}
-          </Link>
-        ) : (
-          <Button
-            type="button"
-            tone="surface"
-            disabled={pending}
-            onClick={async () => {
-              if (!action.stage || !window.confirm(action.confirm ?? "Move this project?")) return
-              setPending(true)
-              const result = await moveProjectStage(project.id, action.stage)
-              setPending(false)
-              toast(result.message)
-              if (result.ok) router.refresh()
-            }}
-          >
-            {action.label}
-          </Button>
-        )}
+        <Link href={action.href} className="inline-flex rounded-full bg-surface px-4 py-2 text-[14px] text-ink shadow-[var(--shadow)]">
+          {action.label}
+        </Link>
       </div>
     </section>
   )

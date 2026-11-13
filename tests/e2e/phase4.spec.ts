@@ -21,7 +21,7 @@ test.beforeAll(async () => {
     client_id: ringClient,
     name: `PW ${stamp}`,
     type: "Set Design & Delivery",
-    stage: "design",
+    stage: "set_design",
     status: "ongoing",
   }).select("id").single()
   if (project.error || !project.data) throw project.error ?? new Error("No project")

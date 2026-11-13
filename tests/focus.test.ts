@@ -16,12 +16,14 @@ function project(partial: Pick<ProjectCard, "id" | "name" | "stage" | "status" |
     client_name: partial.name === "Ring" ? "Ring" : "Shark Ninja",
     contract_value: null,
     updated_at: "2026-11-12T00:00:00Z",
+    stage_entered_at: "2026-11-12T00:00:00Z",
+    gates: [],
     ...partial,
   }
 }
 
 const projects = [
-  project({ id: "ring", name: "Ring", stage: "design", status: "active", due_date: "2026-11-13" }),
+  project({ id: "ring", name: "Ring", stage: "set_design", status: "active", due_date: "2026-11-13" }),
   project({ id: "beauty", name: "Shark Beauty", stage: "brief", status: "ongoing", due_date: null }),
   project({ id: "home", name: "Shark Home", stage: "brief", status: "ongoing", due_date: null }),
   project({ id: "ninja", name: "Shark Ninja", stage: "brief", status: "ongoing", due_date: null }),

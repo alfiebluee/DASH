@@ -1,5 +1,5 @@
-import type { Stage, Status } from "@/lib/labels"
-import { isStage, isStatus } from "@/lib/labels"
+import type { ApprovalKind, Stage, Status } from "@/lib/labels"
+import { isApprovalKind, isStage, isStatus } from "@/lib/labels"
 
 export type ProjectCard = {
   id: string
@@ -15,6 +15,16 @@ export type ProjectCard = {
   client_name: string
   contract_value: number | null
   updated_at: string
+  stage_entered_at: string | null
+  gates: ProjectGate[]
+}
+
+export type ProjectGate = {
+  id: string
+  project_id: string
+  kind: ApprovalKind
+  status: "pending" | "approved"
+  gate_for_stage: Stage
 }
 
 export type ClientRecord = {
@@ -212,6 +222,22 @@ export function toProject(row: unknown): ProjectCard | null {
     client_name: clientName(record.clients),
     contract_value: record.contract_value == null || record.contract_value === "" ? null : asNumber(record.contract_value),
     updated_at: text(record.updated_at),
+    stage_entered_at: null,
+    gates: [],
+  }
+}
+
+export function toProjectGate(row: unknown): ProjectGate | null {
+  if (!row || typeof row !== "object") return null
+  const record = row as Record<string, unknown>
+  if (typeof record.id !== "string" || typeof record.project_id !== "string") return null
+  if (!isApprovalKind(record.kind) || !isStage(record.gate_for_stage)) return null
+  return {
+    id: record.id,
+    project_id: record.project_id,
+    kind: record.kind,
+    status: record.status === "approved" ? "approved" : "pending",
+    gate_for_stage: record.gate_for_stage,
   }
 }
 

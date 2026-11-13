@@ -2,7 +2,8 @@
 
 import { failed, type ActionResult } from "@/lib/action-result"
 import { loadSettings } from "@/lib/data"
-import { stageLabel, type Stage } from "@/lib/labels"
+import { approvalLabel, isApprovalKind, isStage, stageLabel, type Stage } from "@/lib/labels"
+import { blockingApprovals } from "@/lib/stages"
 import { ownerGuard, refreshSurfaces, saved } from "@/lib/mutate"
 import { createClient } from "@/lib/supabase/server"
 import { documentFormSchema, projectFormSchema, stageSchema } from "@/lib/validation/records"
@@ -18,19 +19,6 @@ async function logStage(projectId: string, actorId: string, stage: Stage) {
     message: `Moved to ${stageLabel(stage)}`,
     client_visible: true,
   })
-  if (stage === "review") {
-    const { data } = await supabase.from("documents").select("id").eq("project_id", projectId).eq("kind", "sign_off").limit(1)
-    if (!data || data.length === 0) {
-      await supabase.from("documents").insert({
-        project_id: projectId,
-        kind: "sign_off",
-        title: "Sign-off",
-        status: "sent",
-        sent_at: new Date().toISOString(),
-        version: 1,
-      })
-    }
-  }
 }
 
 export async function createProject(formData: FormData): Promise<ActionResult> {
@@ -75,24 +63,82 @@ export async function saveProject(projectId: string, formData: FormData): Promis
   if (!parsed.success) return failed(parsed.error.issues[0]?.message ?? "Check the project details.")
 
   const supabase = await createClient()
-  const { data: current } = await supabase.from("projects").select("stage").eq("id", projectId).maybeSingle()
-  if (!current) return failed("Project not found.")
-  const { error } = await supabase.from("projects").update(parsed.data).eq("id", projectId)
+  const { error } = await supabase
+    .from("projects")
+    .update({
+      client_id: parsed.data.client_id,
+      name: parsed.data.name,
+      type: parsed.data.type,
+      status: parsed.data.status,
+      start_date: parsed.data.start_date,
+      due_date: parsed.data.due_date,
+      description: parsed.data.description,
+    })
+    .eq("id", projectId)
   if (error) return failed("The project could not be saved.")
-  if (current.stage !== parsed.data.stage) await logStage(projectId, guard.session.id, parsed.data.stage)
   refreshSurfaces(projectId)
   return saved("Project saved.")
 }
 
-export async function moveProjectStage(projectId: string, stage: Stage): Promise<ActionResult> {
+export async function approveProjectGate(approvalId: string): Promise<ActionResult> {
+  const guard = await ownerGuard()
+  if (!("session" in guard)) return guard
+  const supabase = await createClient()
+  const { data } = await supabase.from("project_approvals").select("id, project_id, kind, status").eq("id", approvalId).maybeSingle()
+  if (!data) return failed("Approval not found.")
+  if (!isApprovalKind(data.kind)) return failed("Approval not found.")
+  if (data.status === "approved") return saved(`${approvalLabel(data.kind)} is already approved.`)
+  const { error } = await supabase
+    .from("project_approvals")
+    .update({ status: "approved", approved_at: new Date().toISOString() })
+    .eq("id", approvalId)
+  if (error) return failed("The approval could not be saved.")
+  await supabase.from("activity_log").insert({
+    project_id: data.project_id,
+    actor_id: guard.session.id,
+    type: "approval",
+    message: `${approvalLabel(data.kind)} approved`,
+    client_visible: true,
+  })
+  refreshSurfaces(data.project_id)
+  return saved(`${approvalLabel(data.kind)} approved.`)
+}
+
+export async function moveProjectStage(projectId: string, stage: Stage, choice?: "move" | "approve"): Promise<ActionResult> {
   const guard = await ownerGuard()
   if (!("session" in guard)) return guard
   const parsed = stageSchema.safeParse(stage)
   if (!parsed.success) return failed("Choose a stage.")
   const supabase = await createClient()
   const { data: current } = await supabase.from("projects").select("stage").eq("id", projectId).maybeSingle()
-  if (!current) return failed("Project not found.")
+  if (!current || !isStage(current.stage)) return failed("Project not found.")
   if (current.stage === parsed.data) return saved(`Already in ${stageLabel(parsed.data)}.`)
+
+  const { data: approvals } = await supabase.from("project_approvals").select("id, kind, status, gate_for_stage").eq("project_id", projectId)
+  const gates = (approvals ?? []).flatMap((row) => {
+    if (!isApprovalKind(row.kind) || !isStage(row.gate_for_stage)) return []
+    return [{ id: row.id, kind: row.kind, status: row.status === "approved" ? "approved" as const : "pending" as const, gate_for_stage: row.gate_for_stage }]
+  })
+  const pending = blockingApprovals(current.stage, parsed.data, gates)
+  if (pending.length > 0 && choice !== "move" && choice !== "approve") return failed("Confirm the pending approvals before moving forward.")
+  if (choice === "approve" && pending.length > 0) {
+    const approvedAt = new Date().toISOString()
+    const { error } = await supabase
+      .from("project_approvals")
+      .update({ status: "approved", approved_at: approvedAt })
+      .in("id", pending.flatMap((item) => (item.id ? [item.id] : [])))
+    if (error) return failed("The approvals could not be saved.")
+    await supabase.from("activity_log").insert(
+      pending.map((item) => ({
+        project_id: projectId,
+        actor_id: guard.session.id,
+        type: "approval",
+        message: `${approvalLabel(item.kind)} approved`,
+        client_visible: true,
+      })),
+    )
+  }
+
   const { error } = await supabase.from("projects").update({ stage: parsed.data }).eq("id", projectId)
   if (error) return failed("The stage could not be saved.")
   await logStage(projectId, guard.session.id, parsed.data)

@@ -277,16 +277,56 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"projects": {
+                },"project_approvals": {
                   Row: {
-                    "client_id": string,"contract_value": number | null,"created_at": string,"deposit_percent": number,"description": string,"due_date": string | null,"id": string,"name": string,"pinned": boolean,"stage": Database["public"]['Enums']["project_stage"],"start_date": string | null,"status": Database["public"]['Enums']["project_status"],"type": string,"updated_at": string
+                    "approved_at": string | null,"created_at": string,"gate_for_stage": string,"id": string,"kind": string,"project_id": string,"status": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "client_id": string,"contract_value"?: number | null,"created_at"?: string,"deposit_percent"?: number,"description"?: string,"due_date"?: string | null,"id"?: string,"name": string,"pinned"?: boolean,"stage"?: Database["public"]['Enums']["project_stage"],"start_date"?: string | null,"status"?: Database["public"]['Enums']["project_status"],"type"?: string,"updated_at"?: string
+                    "approved_at"?: string | null,"created_at"?: string,"gate_for_stage": string,"id"?: string,"kind": string,"project_id": string,"status"?: string,"updated_at"?: string
                   }
                   Update: {
-                    "client_id"?: string,"contract_value"?: number | null,"created_at"?: string,"deposit_percent"?: number,"description"?: string,"due_date"?: string | null,"id"?: string,"name"?: string,"pinned"?: boolean,"stage"?: Database["public"]['Enums']["project_stage"],"start_date"?: string | null,"status"?: Database["public"]['Enums']["project_status"],"type"?: string,"updated_at"?: string
+                    "approved_at"?: string | null,"created_at"?: string,"gate_for_stage"?: string,"id"?: string,"kind"?: string,"project_id"?: string,"status"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "project_approvals_project_id_fkey"
+      columns: ["project_id"]
+isOneToOne: false
+      referencedRelation: "projects"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"project_stage_history": {
+                  Row: {
+                    "created_at": string,"entered_at": string,"exited_at": string | null,"id": string,"project_id": string,"stage": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"entered_at"?: string,"exited_at"?: string | null,"id"?: string,"project_id": string,"stage": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"entered_at"?: string,"exited_at"?: string | null,"id"?: string,"project_id"?: string,"stage"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "project_stage_history_project_id_fkey"
+      columns: ["project_id"]
+isOneToOne: false
+      referencedRelation: "projects"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"projects": {
+                  Row: {
+                    "client_id": string,"contract_value": number | null,"created_at": string,"deposit_percent": number,"description": string,"due_date": string | null,"id": string,"name": string,"pinned": boolean,"stage": string,"start_date": string | null,"status": Database["public"]['Enums']["project_status"],"type": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "client_id": string,"contract_value"?: number | null,"created_at"?: string,"deposit_percent"?: number,"description"?: string,"due_date"?: string | null,"id"?: string,"name": string,"pinned"?: boolean,"stage"?: string,"start_date"?: string | null,"status"?: Database["public"]['Enums']["project_status"],"type"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "client_id"?: string,"contract_value"?: number | null,"created_at"?: string,"deposit_percent"?: number,"description"?: string,"due_date"?: string | null,"id"?: string,"name"?: string,"pinned"?: boolean,"stage"?: string,"start_date"?: string | null,"status"?: Database["public"]['Enums']["project_status"],"type"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -394,13 +434,10 @@ isOneToOne: false
                            },
 "sign_in_kind":
 { Args: { "target_email": string }; Returns: string
-                           },
-"stage_is_complete":
-{ Args: { "target_project": string,"target_stage": Database["public"]['Enums']["project_stage"] }; Returns: boolean
                            }
           }
           Enums: {
-            "approval_decision": "approved"|"changes_requested","budget_kind": "design_delivery"|"handyman"|"materials"|"contingency"|"other","document_kind": "proposal"|"scope_of_work"|"set_design"|"budget"|"sign_off"|"other","document_status": "draft"|"sent"|"approved"|"changes_requested","invoice_status": "draft"|"sent"|"paid"|"void","invoice_type": "deposit"|"final","material_priority": "normal"|"high","material_status": "to_order"|"ordered"|"delivered"|"late"|"cancelled","order_status": "draft"|"ordered"|"delivered"|"late"|"cancelled","project_stage": "pipeline"|"brief"|"design"|"build"|"review"|"live","project_status": "active"|"ongoing"|"on_hold"|"archived","user_role": "owner"|"client"
+            "approval_decision": "approved"|"changes_requested","budget_kind": "design_delivery"|"handyman"|"materials"|"contingency"|"other","document_kind": "proposal"|"scope_of_work"|"set_design"|"budget"|"sign_off"|"other","document_status": "draft"|"sent"|"approved"|"changes_requested","invoice_status": "draft"|"sent"|"paid"|"void","invoice_type": "deposit"|"final","material_priority": "normal"|"high","material_status": "to_order"|"ordered"|"delivered"|"late"|"cancelled","order_status": "draft"|"ordered"|"delivered"|"late"|"cancelled","project_status": "active"|"ongoing"|"on_hold"|"archived","user_role": "owner"|"client"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -516,7 +553,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "approval_decision": ["approved", "changes_requested"],"budget_kind": ["design_delivery", "handyman", "materials", "contingency", "other"],"document_kind": ["proposal", "scope_of_work", "set_design", "budget", "sign_off", "other"],"document_status": ["draft", "sent", "approved", "changes_requested"],"invoice_status": ["draft", "sent", "paid", "void"],"invoice_type": ["deposit", "final"],"material_priority": ["normal", "high"],"material_status": ["to_order", "ordered", "delivered", "late", "cancelled"],"order_status": ["draft", "ordered", "delivered", "late", "cancelled"],"project_stage": ["pipeline", "brief", "design", "build", "review", "live"],"project_status": ["active", "ongoing", "on_hold", "archived"],"user_role": ["owner", "client"]
+            "approval_decision": ["approved", "changes_requested"],"budget_kind": ["design_delivery", "handyman", "materials", "contingency", "other"],"document_kind": ["proposal", "scope_of_work", "set_design", "budget", "sign_off", "other"],"document_status": ["draft", "sent", "approved", "changes_requested"],"invoice_status": ["draft", "sent", "paid", "void"],"invoice_type": ["deposit", "final"],"material_priority": ["normal", "high"],"material_status": ["to_order", "ordered", "delivered", "late", "cancelled"],"order_status": ["draft", "ordered", "delivered", "late", "cancelled"],"project_status": ["active", "ongoing", "on_hold", "archived"],"user_role": ["owner", "client"]
           }
         }
 } as const

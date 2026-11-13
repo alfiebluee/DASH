@@ -10,6 +10,7 @@ import {
   toMaterial,
   toOrder,
   toProject,
+  toProjectGate,
   type ActivityRecord,
   type AreaRecord,
   type BudgetLineRecord,
@@ -31,6 +32,33 @@ function rows(data: unknown): unknown[] {
   return Array.isArray(data) ? data : []
 }
 
+async function attachStageContext(projects: ProjectCard[]): Promise<ProjectCard[]> {
+  if (projects.length === 0) return projects
+  const supabase = await createClient()
+  const ids = projects.map((project) => project.id)
+  const [history, approvals] = await Promise.all([
+    supabase.from("project_stage_history").select("project_id, entered_at, exited_at").in("project_id", ids).is("exited_at", null),
+    supabase.from("project_approvals").select("id, project_id, kind, status, gate_for_stage").in("project_id", ids),
+  ])
+  if (history.error) throw new Error(history.error.message)
+  if (approvals.error) throw new Error(approvals.error.message)
+  const entered = new Map<string, string>()
+  for (const row of rows(history.data)) {
+    if (!row || typeof row !== "object") continue
+    const record = row as { project_id?: string; entered_at?: string }
+    if (record.project_id && record.entered_at) entered.set(record.project_id, record.entered_at)
+  }
+  const gates = rows(approvals.data).flatMap((row) => {
+    const gate = toProjectGate(row)
+    return gate ? [gate] : []
+  })
+  return projects.map((project) => ({
+    ...project,
+    stage_entered_at: entered.get(project.id) ?? null,
+    gates: gates.filter((gate) => gate.project_id === project.id),
+  }))
+}
+
 export async function loadProjects(): Promise<ProjectCard[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
@@ -38,10 +66,11 @@ export async function loadProjects(): Promise<ProjectCard[]> {
     .select("id, name, type, stage, status, due_date, start_date, pinned, description, client_id, contract_value, updated_at, clients(name)")
     .order("name")
   if (error) throw new Error(error.message)
-  return rows(data).flatMap((row) => {
+  const projects = rows(data).flatMap((row) => {
     const project = toProject(row)
     return project ? [project] : []
   })
+  return attachStageContext(projects)
 }
 
 export async function loadProject(id: string): Promise<ProjectCard | null> {
@@ -52,7 +81,10 @@ export async function loadProject(id: string): Promise<ProjectCard | null> {
     .eq("id", id)
     .maybeSingle()
   if (error) throw new Error(error.message)
-  return toProject(data)
+  const project = toProject(data)
+  if (!project) return null
+  const [withContext] = await attachStageContext([project])
+  return withContext ?? null
 }
 
 export async function loadClients(): Promise<ClientRecord[]> {

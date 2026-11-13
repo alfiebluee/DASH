@@ -6,11 +6,13 @@ import { useState } from "react"
 
 import { moveProjectStage } from "@/app/(studio)/studio/projects/actions"
 import { CreateProjectForm } from "@/components/create-project-form"
+import { StageGateDialog } from "@/components/stage-gate-dialog"
 import { useToast } from "@/components/toast-provider"
 import { Button } from "@/components/ui/button"
 import { Modal } from "@/components/ui/dialog"
-import { formatDue, stageLabel, stages, type Stage } from "@/lib/labels"
+import { stageLabel, stages, type Stage } from "@/lib/labels"
 import type { ClientRecord, ProjectCard } from "@/lib/records"
+import { awaitingLabel, blockingApprovals, daysInStageLabel, type GateApproval } from "@/lib/stages"
 
 export function StageBoard({
   projects,
@@ -24,6 +26,8 @@ export function StageBoard({
   const [items, setItems] = useState(projects)
   const [seen, setSeen] = useState(projects)
   const [creating, setCreating] = useState(false)
+  const [drag, setDrag] = useState<{ id: string; stage: Stage; pending: GateApproval[] } | null>(null)
+  const [busy, setBusy] = useState(false)
   const toast = useToast()
   const router = useRouter()
   if (seen !== projects) {
@@ -31,15 +35,31 @@ export function StageBoard({
     setItems(projects)
   }
 
-  async function move(id: string, stage: Stage) {
+  async function commit(id: string, stage: Stage, choice: "move" | "approve") {
     const current = items.find((item) => item.id === id)
     if (!current || current.stage === stage) return
     const previous = items
-    setItems(items.map((item) => (item.id === id ? { ...item, stage } : item)))
-    const result = await moveProjectStage(id, stage)
+    setItems(items.map((item) => (item.id === id ? { ...item, stage, stage_entered_at: new Date().toISOString() } : item)))
+    setBusy(true)
+    const result = await moveProjectStage(id, stage, choice)
+    setBusy(false)
     toast(result.message)
     if (!result.ok) setItems(previous)
-    else router.refresh()
+    else {
+      setDrag(null)
+      router.refresh()
+    }
+  }
+
+  function move(id: string, stage: Stage) {
+    const current = items.find((item) => item.id === id)
+    if (!current || current.stage === stage) return
+    const pending = blockingApprovals(current.stage, stage, current.gates)
+    if (pending.length > 0) {
+      setDrag({ id, stage, pending })
+      return
+    }
+    void commit(id, stage, "move")
   }
 
   return (
@@ -57,7 +77,7 @@ export function StageBoard({
         {stages.map((stage) => (
           <div
             key={stage}
-            className="min-w-[150px] flex-1 rounded-[22px] bg-column p-2"
+            className="min-w-[180px] flex-1 rounded-[22px] bg-column p-2"
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => {
               event.preventDefault()
@@ -78,20 +98,32 @@ export function StageBoard({
                     onDragStart={(event) => event.dataTransfer.setData("text/plain", project.id)}
                     className={`rounded-[18px] bg-surface p-3 shadow-[var(--shadow)] ${focusId === project.id ? "ring-2 ring-brand" : ""}`}
                   >
-                    <Link href={`/studio?focus=${project.id}`} className="text-[14px] font-medium text-ink">
+                    <p className="text-[12px] text-ink-3">{project.client_name}</p>
+                    <Link href={`/studio/projects/${project.id}`} className="mt-1 block text-[14px] font-medium text-ink">
                       {project.name}
                     </Link>
-                    <p className="mt-1 text-[12px] text-ink-3">{project.type || project.client_name}</p>
-                    <p className="mt-2 text-[12px] text-ink-2">{formatDue(project.due_date, project.status)}</p>
-                    <Link href={`/studio/projects/${project.id}`} className="mt-2 inline-block text-[12px] text-brand">
-                      Open
-                    </Link>
+                    {awaitingLabel(stage, project.gates) ? (
+                      <p className="mt-2 w-fit rounded-full bg-focus px-2 py-1 text-[11px] text-ink">Awaiting: {awaitingLabel(stage, project.gates)}</p>
+                    ) : null}
+                    <p className="mt-2 text-[12px] text-ink-2">{daysInStageLabel(project.stage_entered_at)} in stage</p>
                   </article>
                 ))}
             </div>
           </div>
         ))}
       </div>
+      <StageGateDialog
+        target={drag?.stage ?? null}
+        pending={drag?.pending ?? []}
+        busy={busy}
+        onCancel={() => setDrag(null)}
+        onMove={() => {
+          if (drag) void commit(drag.id, drag.stage, "move")
+        }}
+        onApprove={() => {
+          if (drag) void commit(drag.id, drag.stage, "approve")
+        }}
+      />
       <Modal open={creating} onOpenChange={setCreating} title="New project" description="The project is saved to the studio.">
         <CreateProjectForm clients={clients} onDone={() => setCreating(false)} />
       </Modal>

@@ -33,7 +33,7 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
         {visibleDocuments.length === 0 ? <p className="text-[15px] text-ink-2">No documents have been sent yet.</p> : null}
         {budgetShared ? <PortalBudget lines={budgetLines} /> : null}
         {visibleDocuments.map((document) => (
-          <ApprovalPanel key={document.id} document={document} review={project.stage === "review"} />
+          <ApprovalPanel key={document.id} document={document} review={project.stage === "build_complete"} />
         ))}
       </section>
       <PortalDeliveries items={deliveries} />

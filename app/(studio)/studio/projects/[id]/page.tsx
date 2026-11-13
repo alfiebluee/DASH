@@ -5,6 +5,7 @@ import { BudgetPanel } from "@/components/budget-panel"
 import { DocumentPanel } from "@/components/document-panel"
 import { MaterialsSheet } from "@/components/materials-sheet"
 import { OrdersPanel } from "@/components/orders-panel"
+import { ProjectApprovals } from "@/components/project-approvals"
 import { ProjectEditor } from "@/components/project-editor"
 import { ProjectSwitcher } from "@/components/project-switcher"
 import { StageTracker } from "@/components/stage-tracker"
@@ -53,6 +54,9 @@ export default async function ProjectPage({
       </p>
       <h1 className="mt-2 text-[36px] font-light tracking-[-0.03em]">{project.name}</h1>
       <p className="mt-2 text-[14px] text-ink-2">{formatDue(project.due_date, project.status)}</p>
+      <div className="mt-6">
+        <StageTracker projectId={project.id} stage={project.stage} gates={project.gates} />
+      </div>
       <nav className="mt-6 flex flex-wrap gap-2" aria-label="Project">
         {tabs.map((item) => (
           <Link
@@ -67,12 +71,7 @@ export default async function ProjectPage({
       </nav>
       {tab === "overview" ? (
         <div className="mt-6 grid gap-6">
-          <section className="rounded-[28px] bg-surface p-6 shadow-[var(--shadow)]">
-            <h2 className="text-[18px] font-medium">Stage</h2>
-            <div className="mt-4">
-              <StageTracker projectId={project.id} stage={project.stage} />
-            </div>
-          </section>
+          <ProjectApprovals gates={project.gates} />
           <section className="max-w-xl rounded-[28px] bg-surface p-6 shadow-[var(--shadow)]">
             <h2 className="text-[18px] font-medium">Details</h2>
             <div className="mt-4">

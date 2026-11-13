@@ -9,13 +9,9 @@ import { createAdmin } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { emailSchema } from "@/lib/validation/settings"
 
-function localOrigin(origin: string): boolean {
-  try {
-    const host = new URL(origin).hostname
-    return host === "localhost" || host === "127.0.0.1" || host === "::1"
-  } catch {
-    return false
-  }
+function cooldownSeconds(message: string): number {
+  const match = /after (\d+) seconds?/i.exec(message)
+  return match ? Number(match[1]) : 0
 }
 
 async function establishSession(email: string): Promise<boolean> {
@@ -62,22 +58,25 @@ export async function signIn(formData: FormData) {
   const person = staffByEmail(email)
   const supabase = await createClient()
   const origin = (await headers()).get("origin") ?? appUrl()
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: `${origin}/auth/callback`,
-      shouldCreateUser: kind === "owner",
-      data: person ? { full_name: person.full_name } : undefined,
-    },
-  })
-  if (error) {
-    if (error.code === "over_email_send_rate_limit" && localOrigin(origin)) {
-      const signedIn = await establishSession(email)
-      if (signedIn) redirect(kind === "owner" ? "/studio" : "/portal")
-      redirect("/login?error=rate")
-    }
-    redirect(error.code === "over_email_send_rate_limit" ? "/login?error=rate" : "/login?error=send")
+  const linkOptions = {
+    emailRedirectTo: `${origin}/auth/callback`,
+    shouldCreateUser: kind === "owner",
+    data: person ? { full_name: person.full_name } : undefined,
   }
+  let { error } = await supabase.auth.signInWithOtp({ email, options: linkOptions })
+  const pause = error ? cooldownSeconds(error.message) : 0
+  if (error?.code === "over_email_send_rate_limit" && pause > 0 && pause <= 5) {
+    await new Promise((resolve) => setTimeout(resolve, (pause + 1) * 1000))
+    const retry = await supabase.auth.signInWithOtp({ email, options: linkOptions })
+    error = retry.error
+  }
+  if (error?.code === "over_email_send_rate_limit") {
+    if (cooldownSeconds(error.message) > 5) redirect("/login?sent=1")
+    const signedIn = await establishSession(email)
+    if (signedIn) redirect(kind === "owner" ? "/studio" : "/portal")
+    redirect("/login?sent=1")
+  }
+  if (error) redirect("/login?error=send")
   redirect("/login?sent=1")
 }
 

@@ -63,3 +63,21 @@ textarea {
   color: var(--ink);
   font-size: 15px;
 }
+
+.sign-in-bar {
+  width: 8%;
+  animation: sign-in-bar 8s cubic-bezier(0.16, 0.84, 0.24, 1) forwards;
+}
+
+@keyframes sign-in-bar {
+  0% { width: 8%; }
+  55% { width: 62%; }
+  100% { width: 96%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sign-in-bar {
+    animation: none;
+    width: 100%;
+  }
+}

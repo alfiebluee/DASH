@@ -6,6 +6,7 @@ export type StaffMember = {
 
 export const staff = [
   { email: "alfiebluee@gmail.com", full_name: "Test user", job_title: "" },
+  { email: "alfie@asiya.space", full_name: "Alfie", job_title: "" },
   { email: "teddy@go-places.io", full_name: "Teddy", job_title: "Director of Ops" },
   { email: "alexbutler@go-places.io", full_name: "Alex", job_title: "Head of Live Ops" },
   { email: "riley@go-places.io", full_name: "Riley", job_title: "Live Ops Team" },

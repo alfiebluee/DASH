@@ -85,6 +85,7 @@ it("stops one client reading another client's projects, and hides item prices", 
   const directory = await db.query<{ email: string }>("select email from list_staff() order by email")
   expect(directory.rows.map((row) => row.email)).toEqual([
     "alexbutler@go-places.io",
+    "alfie@asiya.space",
     "alfiebluee@gmail.com",
     "riley@go-places.io",
     "teddy@go-places.io",

@@ -3,7 +3,7 @@ project_id = "studio"
 [auth]
 enabled = true
 site_url = "http://127.0.0.1:3000"
-additional_redirect_urls = ["http://127.0.0.1:3000/auth/callback", "http://127.0.0.1:3100/auth/callback", "http://localhost:3000/auth/callback"]
+additional_redirect_urls = ["http://127.0.0.1:3000/auth/callback", "http://127.0.0.1:3100/auth/callback", "http://localhost:3000/auth/callback", "https://central-rust.vercel.app/auth/callback"]
 enable_signup = true
 
 [auth.email]
@@ -15,5 +15,5 @@ subject = "You've been invited"
 content_path = "./supabase/templates/invite.html"
 
 [auth.email.template.magic_link]
-subject = "Your sign-in link"
+subject = "Your sign-in code"
 content_path = "./supabase/templates/magic_link.html"

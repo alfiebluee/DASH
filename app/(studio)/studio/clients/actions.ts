@@ -111,10 +111,10 @@ export async function inviteClient(clientId: string, formData: FormData): Promis
     email,
     options: { emailRedirectTo: `${origin}/auth/callback`, shouldCreateUser: false },
   })
-  if (otpError) return failed(otpError.message || "The sign-in link could not be sent.")
+  if (otpError) return failed(otpError.message || "The sign-in code could not be sent.")
   refreshSurfaces()
   revalidateClient(clientId)
-  return saved("Sign-in link sent.")
+  return saved("Sign-in code sent.")
 }
 
 function revalidateClient(clientId: string) {

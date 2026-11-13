@@ -9,3 +9,5 @@ export const settingsFormSchema = z.object({
 })
 
 export const emailSchema = z.email("Enter a valid email")
+
+export const signInCodeSchema = z.string().trim().regex(/^\d{6,8}$/, "Enter the code from your email")
